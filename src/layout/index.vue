@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { Expand, Fold, HomeFilled, SwitchButton } from '@element-plus/icons-vue'
+import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
-const router = useRouter()
 const isCollapse = ref(false)
+const userStore = useUserStore()
 
 const activeMenu = computed(() => route.path)
 
@@ -18,8 +19,21 @@ function toggleCollapse() {
 }
 
 function handleLogout() {
-  router.push('/login')
+  userStore.logout()
 }
+
+function syncCollapseByViewport() {
+  isCollapse.value = window.innerWidth < 768
+}
+
+onMounted(() => {
+  syncCollapseByViewport()
+  window.addEventListener('resize', syncCollapseByViewport)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', syncCollapseByViewport)
+})
 </script>
 
 <template>
@@ -33,9 +47,9 @@ function handleLogout() {
         :default-active="activeMenu"
         :collapse="isCollapse"
         router
-        background-color="#304156"
-        text-color="#bfcbd9"
-        active-text-color="#409eff"
+        background-color="var(--sidebar-bg)"
+        text-color="var(--sidebar-text)"
+        active-text-color="var(--sidebar-active)"
       >
         <el-menu-item v-for="item in menuItems" :key="item.path" :index="item.path">
           <el-icon><component :is="item.icon" /></el-icon>
@@ -53,8 +67,8 @@ function handleLogout() {
         <div class="header-right">
           <el-dropdown>
             <span class="user-info">
-              <el-avatar :size="32">A</el-avatar>
-              <span class="username">Admin</span>
+              <el-avatar :size="32">{{ userStore.avatarText }}</el-avatar>
+              <span class="username">{{ userStore.displayName }}</span>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
@@ -81,7 +95,7 @@ function handleLogout() {
 
 .layout-aside {
   overflow: hidden;
-  background-color: #304156;
+  background-color: var(--sidebar-bg);
   transition: width 0.3s;
 
   .logo {
@@ -90,9 +104,10 @@ function handleLogout() {
     justify-content: center;
     height: 60px;
     color: #fff;
-    font-size: 18px;
+    font-size: var(--font-size-title);
     font-weight: 600;
-    background-color: #263445;
+    line-height: var(--line-height-title);
+    background-color: var(--sidebar-bg-dark);
   }
 
   .el-menu {
@@ -110,10 +125,10 @@ function handleLogout() {
   .collapse-btn {
     font-size: 20px;
     cursor: pointer;
-    color: #606266;
+    color: var(--text-light);
 
     &:hover {
-      color: #409eff;
+      color: var(--primary-color);
     }
   }
 
@@ -125,14 +140,22 @@ function handleLogout() {
       cursor: pointer;
 
       .username {
-        color: #606266;
-        font-size: 14px;
+        color: var(--text-dark);
+        font-size: var(--font-size-body);
       }
     }
   }
 }
 
 .layout-main {
-  background: #f0f2f5;
+  background: var(--bg-primary);
+}
+
+@media (max-width: 1279px) {
+  .layout-aside {
+    :deep(.el-menu-item) {
+      padding: 0 16px;
+    }
+  }
 }
 </style>

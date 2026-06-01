@@ -10,6 +10,10 @@ alwaysApply: false
 - 路由配置放 `src/router/`，Store 放 `src/stores/`
 - 避免使用 `any`，必要时用 `unknown` 收窄
 - 异步操作需显式处理错误，不空 catch
+- 公共类型统一放在 `src/types/` 目录下，按模块分文件。
+- 写任何新 type/interface 前，先去 `src/types/` 查找是否已有可用定义。
+- 如未找到，再在对应的 `*.ts` 文件中新增，并导出供其他模块使用。
+- 禁止在组件文件中定义可复用类型。
 
 ## 命名
 

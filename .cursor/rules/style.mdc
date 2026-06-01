@@ -1,0 +1,69 @@
+---
+description: 视觉设计、色彩、排版与响应式布局约定
+globs: **/*.{vue,scss,css}
+alwaysApply: false
+---
+
+# AI Admin Pro 样式规范
+
+## 设计原则
+
+- 新样式使用 CSS 变量（`var(--*)`），禁止在 scoped 样式中硬编码色值
+- 优先 Element Plus 组件与栅格（`el-row` / `el-col`），减少自定义 media query
+- 改版时逐步替换旧硬编码色（如 layout `#304156`、login 紫色渐变）
+
+## 色彩令牌
+
+```css
+--primary-color: #165DFF;
+--success: #00B42A;
+--warning: #FF7D00;
+--error: #F53F3F;
+--bg-primary: #F2F3F5;
+--text-dark: #1D2129;
+--text-light: #86909C;
+--border-color: #E5E6EB;
+```
+
+Element Plus 映射：`--el-color-primary`、`--el-color-success`、`--el-color-warning`、`--el-color-danger` 与上表一致。全局变量建议放 `src/styles/variables.scss`（唯一数据源）。
+
+## 排版层级
+
+| 层级 | 字号 | 字重 | 颜色 |
+|------|------|------|------|
+| 标题 | 16–18px | 600 | `--text-dark` |
+| 正文 | 14px | 400 | `--text-dark` |
+| 辅助 | 12px | 400 | `--text-light` |
+
+正文 `line-height: 1.5`，标题 `1.4`。单页最多 3 级字号，禁止随意使用 20px、22px。
+
+## 圆角与组件
+
+- 按钮、表单、卡片、输入框圆角统一 **4px**
+- 优先 Element Plus 默认交互（`type="primary"`、`el-form` 校验）
+- 按钮：hover 亮度变化，active 略深，禁用降低对比度
+- 表单错误：`el-form-item` 错误文案 + 边框/文字使用 `--error`，禁止仅改色无提示
+
+## 响应式断点
+
+| 断点 | 布局行为 |
+|------|----------|
+| >= 1280px | 侧栏可展开，表格多列 |
+| 768–1279px | 侧栏可折叠，表格横向滚动或隐藏次要列 |
+| < 768px | 侧栏默认收起，卡片/表单单列堆叠 |
+
+主内容区用 flex / `%` / `minmax`，不写死页面总宽度。与 layout `isCollapse` 机制配合。
+
+## 示例
+
+```scss
+// 好：使用令牌
+.card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+// 差：硬编码
+.card-title { color: #333; border-radius: 6px; }
+```

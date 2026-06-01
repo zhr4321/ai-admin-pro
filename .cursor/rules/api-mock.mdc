@@ -1,0 +1,42 @@
+---
+description: API 请求、MSW Mock 与接口类型约定
+globs: src/api/**/*,src/mocks/**/*,src/types/**/*
+alwaysApply: false
+---
+
+# API 与 MSW Mock 规范
+
+## 分层约定
+
+- 页面/组件 **禁止直接使用 axios**，统一调用 `src/api/<module>.ts`
+- Mock 由 **MSW** 在开发环境拦截，禁止在组件或 `request.ts` 内写 mock 逻辑
+- 类型定义放 `src/types/`，按模块分文件并从 `index.ts` 导出
+
+## 新增接口流程
+
+1. 在 `src/types/` 定义请求/响应类型
+2. 在 `src/mocks/handlers/` 添加 MSW handler（路径为 `/api/...` 完整路径）
+3. 在 `src/api/` 封装 API 方法
+4. 页面调用 API，运行 `npm run dev` 验证 MSW 拦截成功
+
+## 响应格式
+
+统一使用 `ApiResponse<T>`：
+
+```typescript
+{ code: 0, message: 'success', data: T }  // code === 0 为成功
+```
+
+axios 拦截器已解包 `data`，API 函数返回 `Promise<T>`。
+
+## MSW Handler 约定
+
+- 路径与 axios 请求一致：`baseURL` 为 `/api` 时，handler 写 `/api/auth/login`
+- 成功：`HttpResponse.json({ code: 0, message, data })`
+- 业务失败：返回对应 HTTP 状态码 + `code !== 0`
+- handler 文件按模块拆分：`auth.ts`、`dashboard.ts`，由 `handlers/index.ts` 聚合
+
+## 环境说明
+
+- 开发环境：`main.ts` 启动 MSW Worker
+- 生产环境：不启动 MSW，对接真实后端时修改 `VITE_APP_BASE_API`

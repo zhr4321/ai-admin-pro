@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { User, Lock } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
+import { useUserStore } from '@/stores/user'
 
+const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 
 const formRef = ref<FormInstance>()
 const loading = ref(false)
@@ -21,13 +24,21 @@ const rules: FormRules = {
 
 async function handleLogin() {
   if (!formRef.value) return
-  await formRef.value.validate((valid) => {
+  await formRef.value.validate(async (valid) => {
     if (!valid) return
     loading.value = true
-    setTimeout(() => {
+    try {
+      await userStore.login({
+        username: form.username,
+        password: form.password,
+      })
+      const redirect = (route.query.redirect as string) || '/dashboard'
+      router.push(redirect)
+    } catch {
+      // 错误由 axios 拦截器统一提示
+    } finally {
       loading.value = false
-      router.push('/dashboard')
-    }, 500)
+    }
   })
 }
 </script>
@@ -67,30 +78,34 @@ async function handleLogin() {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 16px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #0e42d2 100%);
 }
 
 .login-card {
-  width: 400px;
+  width: 100%;
+  max-width: 400px;
   padding: 40px;
   background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-base);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
 .login-title {
   margin: 0;
-  font-size: 28px;
+  font-size: var(--font-size-title);
   font-weight: 600;
+  line-height: var(--line-height-title);
   text-align: center;
-  color: #303133;
+  color: var(--text-dark);
 }
 
 .login-subtitle {
   margin: 8px 0 32px;
   text-align: center;
-  color: #909399;
-  font-size: 14px;
+  color: var(--text-light);
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-body);
 }
 
 .login-btn {

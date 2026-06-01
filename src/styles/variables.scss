@@ -1,0 +1,37 @@
+:root {
+  /* 主色与功能色 */
+  --primary-color: #165dff;
+  --success: #00b42a;
+  --warning: #ff7d00;
+  --error: #f53f3f;
+
+  /* 中性色 */
+  --bg-primary: #f2f3f5;
+  --text-dark: #1d2129;
+  --text-light: #86909c;
+  --border-color: #e5e6eb;
+
+  /* 侧栏（后台布局） */
+  --sidebar-bg: #1d2129;
+  --sidebar-bg-dark: #0c0e14;
+  --sidebar-text: #c9cdd4;
+  --sidebar-active: var(--primary-color);
+
+  /* 排版 */
+  --font-size-title: 18px;
+  --font-size-body: 14px;
+  --font-size-caption: 12px;
+  --line-height-title: 1.4;
+  --line-height-body: 1.5;
+
+  /* 圆角 */
+  --radius-base: 4px;
+
+  /* Element Plus 主题映射 */
+  --el-color-primary: #165dff;
+  --el-color-success: #00b42a;
+  --el-color-warning: #ff7d00;
+  --el-color-danger: #f53f3f;
+  --el-border-radius-base: 4px;
+  --el-border-radius-small: 4px;
+}

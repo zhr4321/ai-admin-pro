@@ -20,6 +20,8 @@
 | 路由 | Vue Router |
 | 状态 | Pinia |
 | 样式 | Sass |
+| HTTP | Axios |
+| Mock | MSW（Mock Service Worker） |
 
 ## 快速开始
 
@@ -39,6 +41,39 @@ npm run build
 - 登录页：`/login`（默认账号 `admin` / `123456`）
 - 首页：`/dashboard`
 
+## 接口与本地 Mock（MSW）
+
+开发环境通过 [MSW](https://mswjs.io/) 拦截浏览器网络请求，axios 以真实 HTTP 方式访问 `/api/*`，由 Service Worker 返回本地 mock 数据。
+
+```
+页面 → src/api/*.ts → axios → MSW Worker → src/mocks/handlers
+```
+
+- **开发环境**：`npm run dev` 时自动启动 MSW（控制台出现 `[MSW] Mocking enabled.`）
+- **生产环境**：不启动 MSW，需对接真实后端
+- **测试账号**：`admin` / `123456`
+
+### 相关目录
+
+| 目录 | 说明 |
+|------|------|
+| `src/api/` | axios 实例与接口封装（`request.ts` 统一拦截） |
+| `src/mocks/handlers/` | MSW 路由 handler，按模块拆分 |
+| `src/types/` | 接口请求/响应类型 |
+
+### 新增接口步骤
+
+1. 在 `src/types/` 定义类型
+2. 在 `src/mocks/handlers/` 添加 MSW handler（完整路径如 `/api/xxx`）
+3. 在 `src/api/` 封装 API 方法
+4. 页面调用 API 并验证
+
+### 切换真实后端
+
+修改 `.env.production` 或 `.env.development` 中的 `VITE_APP_BASE_API` 为真实 API 地址；关闭开发环境 MSW 启动逻辑即可。
+
+详见 `.cursor/rules/api-mock.mdc`。
+
 ## VibeCoding 配置
 
 项目内置 Cursor AI 协作基础设施，位于 `.cursor/` 目录：
@@ -52,7 +87,20 @@ npm run build
 | `project-core.mdc` | 全局项目约定（alwaysApply） |
 | `vue-components.mdc` | Vue SFC 编写规范 |
 | `typescript.mdc` | TypeScript 编码规范 |
+| `style.mdc` | 色彩、排版、圆角、响应式与交互约定 |
+| `api-mock.mdc` | API 请求、MSW Mock 与接口类型约定 |
 | `_template.mdc` | 新建规则的空白模板 |
+
+## 设计体系
+
+全局设计令牌定义在 [`src/styles/variables.scss`](src/styles/variables.scss)，并在 `main.ts` 中引入，与 Element Plus 主题变量对齐。
+
+- 主色：`#165DFF`
+- 页面背景：`--bg-primary`
+- 圆角统一：`4px`
+- 响应式：`< 768px` 侧栏自动收起，仪表盘栅格 `:xs="24" :sm="12" :md="6"`
+
+详见 `.cursor/rules/style.mdc`。
 
 ### Prompts（`.cursor/prompts/`）
 
@@ -79,7 +127,7 @@ npm run build
 ## 模块路线图
 
 - [x] 项目脚手架（Layout + Login + Dashboard）
-- [ ] 登录鉴权（Token、路由守卫）
+- [x] 登录鉴权（Token、路由守卫、Pinia 用户状态）
 - [ ] RBAC 权限（角色、菜单、按钮级权限）
 - [ ] 表格 CRUD（搜索、分页、弹窗表单）
 - [ ] 表单模块（复杂表单、校验、联动）
@@ -90,8 +138,12 @@ npm run build
 
 ```
 src/
+├── api/             # axios 封装与接口
+├── mocks/           # MSW handlers
+├── styles/          # 全局样式与设计令牌
 ├── layout/          # 后台布局（侧边栏 + 顶栏）
 ├── router/          # 路由配置
+├── types/           # 公共类型定义
 ├── views/
 │   ├── login/       # 登录页
 │   └── dashboard/   # 首页仪表盘

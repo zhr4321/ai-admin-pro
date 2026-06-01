@@ -16,4 +16,6 @@ body {
 
 #app {
   height: 100%;
+  color: var(--text-dark);
+  background-color: var(--bg-primary);
 }
