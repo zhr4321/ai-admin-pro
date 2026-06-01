@@ -1,0 +1,24 @@
+---
+description: TypeScript 编码规范
+globs: **/*.{ts,tsx}
+alwaysApply: false
+---
+
+# TypeScript 规范
+
+- 优先使用 `interface` 定义数据结构，类型与实现分离
+- 路由配置放 `src/router/`，Store 放 `src/stores/`
+- 避免使用 `any`，必要时用 `unknown` 收窄
+- 异步操作需显式处理错误，不空 catch
+
+## 命名
+
+- 接口/类型：`PascalCase`（如 `UserInfo`）
+- 变量/函数：`camelCase`
+- 常量：`UPPER_SNAKE_CASE`（仅真正常量）
+
+## 导入顺序
+
+1. Vue / 第三方库
+2. `@/` 项目内部模块
+3. 类型导入（`import type`）

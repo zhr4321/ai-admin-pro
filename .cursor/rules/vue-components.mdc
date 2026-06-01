@@ -1,0 +1,35 @@
+---
+description: Vue 单文件组件编写规范
+globs: **/*.vue
+alwaysApply: false
+---
+
+# Vue SFC 规范
+
+- 使用 `<script setup lang="ts">`，组合式 API
+- UI 组件优先使用 Element Plus
+- 图标从 `@element-plus/icons-vue` 导入
+- 样式使用 `<style scoped lang="scss">`
+- 路由页面放在 `src/views/<module>/index.vue`
+
+## 组件结构
+
+```vue
+<script setup lang="ts">
+// imports → props/emits → state → computed → methods
+</script>
+
+<template>
+  <!-- Element Plus 组件 -->
+</template>
+
+<style scoped lang="scss">
+/* 组件私有样式 */
+</style>
+```
+
+## 注意
+
+- 不在 SFC 中引入全局样式
+- 表单校验使用 Element Plus FormRules
+- 路由跳转使用 `useRouter()`，不用 `window.location`

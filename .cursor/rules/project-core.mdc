@@ -1,0 +1,36 @@
+---
+description: ai-admin-pro 项目全局约定与开发原则
+alwaysApply: true
+---
+
+# AI Admin Pro 项目核心规则
+
+## 项目定位
+
+- 项目名：**ai-admin-pro**
+- 目的：VibeCoding 练习 + 求职作品集，面向「支持 AI 辅助开发」的前端岗位
+- 仓库：https://gitee.com/walkingtree/ai-admin-pro.git
+
+## 技术栈
+
+Vue 3 + TypeScript + Vite + Element Plus + Vue Router + Pinia + Sass
+
+## 目录约定
+
+- `src/views/` — 页面组件，按模块分子目录
+- `src/layout/` — 后台布局壳
+- `src/router/` — 路由配置
+- `src/stores/` — Pinia 状态（后续添加）
+- `@` — 指向 `src/` 的路径别名
+
+## 开发原则
+
+- 最小 diff，不改动无关代码
+- 匹配现有代码风格与命名习惯
+- UI 文案使用中文
+- 避免过度抽象和不必要的错误处理
+- 单次 commit 聚焦一个功能模块
+
+## 模块迭代顺序
+
+登录鉴权 → RBAC 权限 → 表格 CRUD → 表单 → 图表 → 系统设置
