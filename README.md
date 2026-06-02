@@ -22,6 +22,7 @@
 | 样式 | Sass |
 | HTTP | Axios |
 | Mock | MSW（Mock Service Worker） |
+| 表格导入导出 | xlsx |
 
 ## 快速开始
 
@@ -40,6 +41,8 @@ npm run build
 
 - 登录页：`/login`（默认账号 `admin` / `123456`）
 - 首页：`/dashboard`
+- 运营中心 → 活动推广：`/operations/campaign`
+- 运营中心 → 公告管理：`/operations/notice`
 
 ## 接口与本地 Mock（MSW）
 
@@ -59,7 +62,10 @@ npm run build
 |------|------|
 | `src/api/` | axios 实例与接口封装（`request.ts` 统一拦截） |
 | `src/mocks/handlers/` | MSW 路由 handler，按模块拆分 |
-| `src/types/` | 接口请求/响应类型 |
+| `src/types/` | 接口请求/响应类型（含 `PageParams` / `PageResult` 分页） |
+| `src/composables/` | 可复用组合式函数（如 `useCrudTableHeight`） |
+| `src/styles/crud-page.scss` | 表格 CRUD 列表页统一样式 |
+| `public/static/` | 导入模板等静态资源（xlsx） |
 
 ### 新增接口步骤
 
@@ -100,6 +106,7 @@ npm run build
 - 页面背景：`--bg-primary`
 - 圆角统一：`4px`
 - 响应式：`< 768px` 侧栏自动收起，仪表盘栅格 `:xs="24" :sm="12" :md="6"`
+- Element Plus 中文 locale（分页等组件文案）
 
 详见 `.cursor/rules/style.mdc`。
 
@@ -110,7 +117,7 @@ npm run build
 | 文件 | 场景 |
 |------|------|
 | `new-admin-module.md` | 新增后台模块 |
-| `crud-page.md` | 表格 CRUD 页面 |
+| `crud-page.md` | 表格 CRUD 页面（推荐配合 `@admin-crud-table`） |
 | `bugfix-debug.md` | Bug 排查修复 |
 | `role-management.md` | 用户权限管理（用户搜索 + 模块权限下拉配置） |
 | `_template.md` | 新建 prompt 的空白模板 |
@@ -133,8 +140,9 @@ npm run build
 - [x] 登录鉴权（Token、路由守卫、Pinia 用户状态）
 - [x] 用户权限管理（用户搜索、模块权限下拉：无/可查看/可修改）
 - [x] 个人信息（查看/编辑、表单校验、头像上传）
+- [x] 表格 CRUD 基础设施（`admin-crud-table` Skill、统一样式、动态表格高度、xlsx 导入/导出）
+- [x] 运营中心（侧边栏子菜单：活动推广、公告管理）
 - [ ] RBAC 进阶（动态菜单、按钮级权限）
-- [ ] 表格 CRUD（搜索、分页、弹窗表单）
 - [ ] 表单模块（复杂表单、校验、联动）
 - [ ] 图表仪表盘（ECharts 数据可视化）
 - [ ] 系统设置（主题切换、国际化）
@@ -143,19 +151,27 @@ npm run build
 
 ```
 src/
-├── api/             # axios 封装与接口
+├── api/             # axios 封装与接口（含 campaign、notice 等模块）
+├── composables/     # 组合式函数（useCrudTableHeight 等）
 ├── mocks/           # MSW handlers
-├── styles/          # 全局样式与设计令牌
-├── layout/          # 后台布局（侧边栏 + 顶栏）
+├── styles/          # 全局样式与设计令牌（含 crud-page.scss）
+├── utils/           # 工具函数（download、excel 导入导出）
+├── layout/          # 后台布局（侧边栏 + 顶栏，支持子菜单）
 ├── router/          # 路由配置
 ├── types/           # 公共类型定义
 ├── views/
 │   ├── login/       # 登录页
 │   ├── dashboard/   # 首页仪表盘
 │   ├── role/        # 用户权限管理
-│   └── profile/     # 个人信息
+│   ├── profile/     # 个人信息
+│   └── operations/  # 运营中心
+│       ├── campaign/  # 活动推广 CRUD
+│       └── notice/    # 公告管理 CRUD
 ├── App.vue
 └── main.ts
+
+public/static/       # 导入模板 xlsx 等静态资源
+scripts/             # 脚本（如 generate-xlsx-template.mjs）
 ```
 
 ## 仓库地址
