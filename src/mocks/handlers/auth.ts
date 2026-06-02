@@ -1,19 +1,11 @@
 import { http, HttpResponse } from 'msw'
-import type { LoginParams, LoginResult, UpdateProfileParams, UserInfo } from '@/types/auth'
+import type { LoginParams, LoginResult, UpdateProfileParams } from '@/types/auth'
+import {
+  getUserInfoByAuthHeader,
+  loginByCredentials,
+  updateUserProfile,
+} from '@/mocks/data/users'
 import { containsForbiddenWord, PHONE_PATTERN } from '@/utils/validators'
-
-let mockUserProfile: UserInfo = {
-  id: 1,
-  username: 'admin',
-  nickname: '管理员',
-  avatar: '',
-  gender: 'male',
-  phone: '13800138000',
-  position: '系统管理员',
-  remark: '',
-  projectRole: '管理员',
-  roles: ['admin'],
-}
 
 function validateProfilePayload(body: UpdateProfileParams): string | null {
   if (!body.nickname?.trim()) return '名称不能为空'
@@ -28,28 +20,29 @@ function validateProfilePayload(body: UpdateProfileParams): string | null {
 export const authHandlers = [
   http.post('/api/auth/login', async ({ request }) => {
     const body = (await request.json()) as LoginParams
+    const result = loginByCredentials(body.username, body.password)
 
-    if (body.username === 'admin' && body.password === '123456') {
-      const data: LoginResult = {
-        token: 'mock-token-admin',
-        username: 'admin',
-      }
-      return HttpResponse.json({
-        code: 0,
-        message: '登录成功',
-        data,
-      })
+    if (!result) {
+      return HttpResponse.json(
+        { code: 401, message: '用户名或密码错误', data: null },
+        { status: 401 },
+      )
     }
 
-    return HttpResponse.json(
-      { code: 401, message: '用户名或密码错误', data: null },
-      { status: 401 },
-    )
+    const data: LoginResult = {
+      token: result.token,
+      username: result.username,
+    }
+    return HttpResponse.json({
+      code: 0,
+      message: '登录成功',
+      data,
+    })
   }),
 
   http.get('/api/auth/userinfo', ({ request }) => {
-    const auth = request.headers.get('Authorization')
-    if (!auth?.startsWith('Bearer ')) {
+    const userInfo = getUserInfoByAuthHeader(request.headers.get('Authorization'))
+    if (!userInfo) {
       return HttpResponse.json(
         { code: 401, message: '未登录', data: null },
         { status: 401 },
@@ -59,13 +52,14 @@ export const authHandlers = [
     return HttpResponse.json({
       code: 0,
       message: 'success',
-      data: { ...mockUserProfile },
+      data: userInfo,
     })
   }),
 
   http.put('/api/auth/profile', async ({ request }) => {
-    const auth = request.headers.get('Authorization')
-    if (!auth?.startsWith('Bearer ')) {
+    const authHeader = request.headers.get('Authorization')
+    const userInfo = getUserInfoByAuthHeader(authHeader)
+    if (!userInfo) {
       return HttpResponse.json(
         { code: 401, message: '未登录', data: null },
         { status: 401 },
@@ -78,25 +72,24 @@ export const authHandlers = [
       return HttpResponse.json({ code: 400, message: error, data: null })
     }
 
-    mockUserProfile = {
-      ...mockUserProfile,
+    const updated = updateUserProfile(userInfo.id, {
       nickname: body.nickname.trim(),
       avatar: body.avatar || '',
       gender: body.gender,
       phone: body.phone.trim(),
       remark: body.remark?.trim() || '',
-    }
+    })
 
     return HttpResponse.json({
       code: 0,
       message: '保存成功',
-      data: { ...mockUserProfile },
+      data: updated,
     })
   }),
 
   http.post('/api/auth/avatar', async ({ request }) => {
-    const auth = request.headers.get('Authorization')
-    if (!auth?.startsWith('Bearer ')) {
+    const userInfo = getUserInfoByAuthHeader(request.headers.get('Authorization'))
+    if (!userInfo) {
       return HttpResponse.json(
         { code: 401, message: '未登录', data: null },
         { status: 401 },
@@ -116,12 +109,12 @@ export const authHandlers = [
       binary += String.fromCharCode(b)
     })
     const url = `data:${file.type};base64,${btoa(binary)}`
-    mockUserProfile = { ...mockUserProfile, avatar: url }
+    const updated = updateUserProfile(userInfo.id, { avatar: url })
 
     return HttpResponse.json({
       code: 0,
       message: '上传成功',
-      data: { url },
+      data: { url: updated?.avatar || url },
     })
   }),
 ]

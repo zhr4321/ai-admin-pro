@@ -4,6 +4,7 @@ import { login as loginApi, getUserInfo as getUserInfoApi } from '@/api/auth'
 import { TOKEN_KEY } from '@/api/request'
 import type { LoginParams, UserInfo } from '@/types/auth'
 import { preloadFormRouteChunks } from '@/utils/preloadRoutes'
+import { canEditModule, canViewModule, getModuleLevel } from '@/utils/permission'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(localStorage.getItem(TOKEN_KEY) || '')
@@ -16,6 +17,16 @@ export const useUserStore = defineStore('user', () => {
   const avatarText = computed(
     () => displayName.value.charAt(0).toUpperCase(),
   )
+
+  function hasModuleView(moduleKey: string): boolean {
+    const level = getModuleLevel(userInfo.value?.permissions, moduleKey)
+    return canViewModule(level)
+  }
+
+  function hasModuleEdit(moduleKey: string): boolean {
+    const level = getModuleLevel(userInfo.value?.permissions, moduleKey)
+    return canEditModule(level)
+  }
 
   function setToken(value: string) {
     token.value = value
@@ -61,5 +72,7 @@ export const useUserStore = defineStore('user', () => {
     login,
     fetchUserInfo,
     logout,
+    hasModuleView,
+    hasModuleEdit,
   }
 })

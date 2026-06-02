@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import type { SystemSettings, UpdateSettingsParams } from '@/types/settings'
+import { requireModuleEdit } from '@/mocks/utils/requireModuleEdit'
 import { containsForbiddenWord } from '@/utils/validators'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -53,12 +54,8 @@ export const settingsHandlers = [
   }),
 
   http.put('/api/settings', async ({ request }) => {
-    if (!requireAuth(request)) {
-      return HttpResponse.json(
-        { code: 401, message: '未登录', data: null },
-        { status: 401 },
-      )
-    }
+    const guard = requireModuleEdit(request, 'system')
+    if (!guard.ok) return guard.response
 
     const body = (await request.json()) as UpdateSettingsParams
     const error = validateSettingsPayload(body)
@@ -85,12 +82,8 @@ export const settingsHandlers = [
   }),
 
   http.post('/api/settings/logo', async ({ request }) => {
-    if (!requireAuth(request)) {
-      return HttpResponse.json(
-        { code: 401, message: '未登录', data: null },
-        { status: 401 },
-      )
-    }
+    const guard = requireModuleEdit(request, 'system')
+    if (!guard.ok) return guard.response
 
     const formData = await request.formData()
     const file = formData.get('file')

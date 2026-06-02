@@ -2,7 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage, type FormInstance, type FormRules, type UploadRequestOptions } from 'element-plus'
-import { getUserInfo, updateProfile, uploadAvatar } from '@/api/auth'
+import { updateProfile, uploadAvatar } from '@/api/auth'
 import { useUserStore } from '@/stores/user'
 import type { Gender, UpdateProfileParams, UserInfo } from '@/types/auth'
 import {
@@ -56,7 +56,7 @@ function genderLabel(gender: Gender) {
 async function loadProfile() {
   loading.value = true
   try {
-    profile.value = await getUserInfo()
+    profile.value = await userStore.fetchUserInfo()
   } catch {
     profile.value = null
   } finally {
@@ -110,8 +110,7 @@ async function handleSave() {
         phone: editForm.phone.trim(),
         remark: editForm.remark?.trim() || '',
       })
-      await userStore.fetchUserInfo()
-      await loadProfile()
+      profile.value = await userStore.fetchUserInfo()
       isEditing.value = false
       ElMessage.success('个人信息保存成功')
     } catch {

@@ -1,6 +1,12 @@
 export type PermissionLevel = 'none' | 'view' | 'edit'
 
-export const PERMISSION_LEVEL_OPTIONS: { label: string; value: PermissionLevel }[] = [
+export interface PermissionLevelOption {
+  label: string
+  value: PermissionLevel
+}
+
+/** @deprecated 请使用 permission-config 接口返回的 options */
+export const PERMISSION_LEVEL_OPTIONS: PermissionLevelOption[] = [
   { label: '无', value: 'none' },
   { label: '可查看', value: 'view' },
   { label: '可修改', value: 'edit' },
@@ -24,8 +30,15 @@ export interface UserSuggestParams {
 
 export interface UserPermissionConfigResult {
   user: Pick<UserAccountItem, 'id' | 'username' | 'realName' | 'roleName'>
-  permissions: UserModulePermission[]
+  permissions: UserModulePermissionConfigItem[]
   isLocked: boolean
+}
+
+export interface UserModulePermissionConfigItem {
+  moduleKey: string
+  permissionName: string
+  level: PermissionLevel
+  options: PermissionLevelOption[]
 }
 
 export interface UserModulePermission {
@@ -45,7 +58,7 @@ export interface UserListResult {
   total: number
 }
 
-/** @deprecated 仅用于 /auth/permissions 兼容判断 */
+/** @deprecated 权限已并入 GET /auth/userinfo 的 permissions 字段，仅 mock 兼容保留 */
 export interface ModulePermission {
   moduleKey: string
   moduleName: string

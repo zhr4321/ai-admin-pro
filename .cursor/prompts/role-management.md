@@ -6,8 +6,8 @@
 
 ## 前置上下文
 
-- 相关规则：`project-core.mdc`、`vue-components.mdc`、`style.mdc`、`api-request.mdc`、`api-mock.mdc`
-- 相关文件：`src/router/index.ts`、`src/layout/index.vue`、`src/api/role.ts`、`src/types/role.ts`、`src/stores/user.ts`
+- 相关规则：`project-core.mdc`、`menu-permission.mdc`、`vue-components.mdc`、`style.mdc`、`api-request.mdc`、`api-mock.mdc`
+- 相关文件：`src/config/modules.ts`、`src/router/index.ts`、`src/layout/index.vue`、`src/api/role.ts`、`src/types/role.ts`、`src/stores/user.ts`
 
 ## 提示词正文
 
@@ -32,42 +32,45 @@
 - 未选用户时 el-empty 提示「请先搜索并选择用户」
 - 已选用户：标题展示「{realName}（{username}）的权限配置」
 - **仅通过** GET /users/:id/permission-config 加载数据，不使用用户搜索接口
-- 模块关键词搜索框：本地过滤功能模块名称（不请求接口）
-- 列表形式：左侧功能模块名，右侧 el-select，选项为：
-  - 无（none）
-  - 可查看（view）
-  - 可修改（edit）
-- 底部「保存权限」按钮：PUT /users/:id/permissions
-- 仅当当前登录用户对 role 模块为「可修改」时可编辑下拉框并保存（GET /auth/permissions 判断）
+- 模块关键词搜索框：本地过滤权限名称（permissionName）
+- 列表形式：左侧 **permissionName（权限名）**，右侧 el-select 使用接口返回的 **options（可操作选项）**
+- 除 **merchant（商户入驻）** 为「无 / 可操作」两项外，其余模块为「无 / 可查看 / 可修改」三项
+- 底部「保存权限」按钮：PUT /users/:id/permissions（提交 moduleKey + moduleName + level）
+- 仅当当前登录用户对 role 模块为「可修改」时可编辑下拉框并保存（通过 `useModulePermission('role')` 或 `userStore.hasModuleEdit('role')` 判断；权限来自 `GET /auth/userinfo` 的 `permissions` 字段）
 
 ### 超级管理员（isSuperAdmin / isLocked）
-- permission-config 接口对超管返回 isLocked: true，permissions 四项均为 edit
+- permission-config 接口对超管返回 isLocked: true，permissions 全部模块均为 edit
 - 前端：所有模块下拉框显示「可修改」且 disabled
 - 展示 el-alert：「超级管理员拥有全部模块可修改权限，不可变更」
 - 保存按钮 disabled；Mock 对超管 PUT 返回 403
 
-## 功能模块（固定 5 项）
+## 功能模块（与 src/config/modules.ts 的 APP_MODULES 同步，当前 7 项）
 | moduleKey | 名称 |
 |-----------|------|
-| dashboard | 首页仪表盘 |
+| dashboard | 首页 |
 | role | 用户权限 |
-| user | 用户管理 |
 | system | 系统设置 |
 | merchant | 商户入驻 |
+| campaign | 活动推广 |
+| notice | 公告管理 |
+| visualization | 数据可视化 |
 
 ## 接口清单
 | 函数 | 方法 | 路径 | 用途 |
 |------|------|------|------|
 | suggestUsers | GET | /users/suggest | 用户搜索建议 |
-| getUserPermissionConfig | GET | /users/:id/permission-config | 下方权限配置专用查询 |
+| getUserPermissionConfig | GET | /users/:id/permission-config | 返回 permissionName + level + options |
 | updateUserPermissions | PUT | /users/:id/permissions | 保存权限 |
-| getCurrentPermissions | GET | /auth/permissions | 判断当前用户能否编辑本页 |
+| fetchUserInfo | GET | /auth/userinfo | 当前用户权限（含 permissions，驱动菜单与按钮） |
 
 ## 技术实现
-1. src/types/role.ts — PermissionLevel、UserSuggestItem、UserPermissionConfigResult 等
-2. src/api/role.ts — suggestUsers、getUserPermissionConfig、updateUserPermissions、getCurrentPermissions
-3. src/mocks/handlers/role.ts — GET /users/suggest、GET /users/:id/permission-config、PUT /users/:id/permissions
-4. src/views/role/index.vue — 单文件，flex column 上下两卡片，下方区域 flex:1 可滚动
+1. src/config/modules.ts — APP_MODULES 单一数据源
+2. src/config/permission-options.ts — 各模块 options 定义与 config 组装
+3. src/types/role.ts — PermissionLevel、UserModulePermissionConfigItem 等
+3. src/api/role.ts — suggestUsers、getUserPermissionConfig、updateUserPermissions
+4. src/mocks/data/users.ts — 用户与权限 mock 数据
+5. src/mocks/handlers/role.ts — GET /users/suggest、GET /users/:id/permission-config、PUT /users/:id/permissions
+6. src/views/role/index.vue — 单文件，flex column 上下两卡片，下方区域 flex:1 可滚动
 5. 侧栏菜单文案「用户权限」，meta.title 同步
 
 ## 禁止
@@ -85,6 +88,6 @@
 - [ ] 下方通过 GET /users/:id/permission-config 加载权限并与下拉框对应
 - [ ] 模块关键词本地过滤生效
 - [ ] 保存权限成功且可再次加载
-- [ ] 超级管理员：四模块均为「可修改」且 disabled，不可保存
+- [ ] 超级管理员：全部模块均为「可修改」且 disabled，不可保存
 - [ ] 无 edit 权限时只读
 - [ ] `npm run build` 通过

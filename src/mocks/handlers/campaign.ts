@@ -5,6 +5,7 @@ import type {
   CampaignItem,
   CampaignStatus,
 } from '@/types/campaign'
+import { requireModuleEdit } from '@/mocks/utils/requireModuleEdit'
 
 let nextId = 7
 
@@ -147,6 +148,9 @@ export const campaignHandlers = [
   }),
 
   http.post('/api/operations/campaigns', async ({ request }) => {
+    const guard = requireModuleEdit(request, 'campaign')
+    if (!guard.ok) return guard.response
+
     const body = (await request.json()) as CampaignFormParams
     const item: CampaignItem = {
       id: nextId++,
@@ -158,6 +162,9 @@ export const campaignHandlers = [
   }),
 
   http.put('/api/operations/campaigns/:id', async ({ params, request }) => {
+    const guard = requireModuleEdit(request, 'campaign')
+    if (!guard.ok) return guard.response
+
     const id = Number(params.id)
     const body = (await request.json()) as CampaignFormParams
     const idx = campaigns.findIndex((item) => item.id === id)
@@ -168,13 +175,19 @@ export const campaignHandlers = [
     return HttpResponse.json({ code: 0, message: 'success', data: campaigns[idx] })
   }),
 
-  http.delete('/api/operations/campaigns/:id', ({ params }) => {
+  http.delete('/api/operations/campaigns/:id', ({ params, request }) => {
+    const guard = requireModuleEdit(request, 'campaign')
+    if (!guard.ok) return guard.response
+
     const id = Number(params.id)
     campaigns = campaigns.filter((item) => item.id !== id)
     return HttpResponse.json({ code: 0, message: 'success', data: null })
   }),
 
   http.post('/api/operations/campaigns/import', async ({ request }) => {
+    const guard = requireModuleEdit(request, 'campaign')
+    if (!guard.ok) return guard.response
+
     const form = await request.formData()
     const file = form.get('file')
     if (!file || !(file instanceof File)) {

@@ -3,6 +3,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { submitOnboarding } from '@/api/merchant'
+import { useModulePermission } from '@/composables/useModulePermission'
 import type { MerchantType } from '@/types/merchant'
 import { PHONE_PATTERN, createForbiddenWordRule } from '@/utils/validators'
 
@@ -22,6 +23,7 @@ interface Step3Model {
 }
 
 const router = useRouter()
+const { canEdit } = useModulePermission('merchant')
 const activeStep = ref(0)
 const submitting = ref(false)
 const step1Ref = ref<FormInstance>()
@@ -255,11 +257,11 @@ function handleCancel() {
       <div class="form-wizard-footer">
         <el-button v-if="!isFirstStep" @click="handlePrev">上一步</el-button>
         <el-button v-if="!isLastStep" type="primary" @click="handleNext">下一步</el-button>
-        <template v-if="isLastStep">
+        <template v-if="isLastStep && canEdit">
           <el-button @click="handlePrev">上一步</el-button>
           <el-button type="primary" :loading="submitting" @click="handleSubmit">提交</el-button>
         </template>
-        <el-button @click="resetWizard">重置</el-button>
+        <el-button v-if="canEdit" @click="resetWizard">重置</el-button>
       </div>
     </el-card>
   </div>

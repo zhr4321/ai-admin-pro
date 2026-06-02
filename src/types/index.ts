@@ -3,11 +3,13 @@ export type { LoginParams, LoginResult, Gender, UserInfo, UpdateProfileParams, A
 export type { DashboardStatItem, DashboardStats } from './dashboard'
 export type {
   PermissionLevel,
+  PermissionLevelOption,
   UserAccountItem,
   UserSuggestItem,
   UserSuggestParams,
   UserPermissionConfigResult,
   UserModulePermission,
+  UserModulePermissionConfigItem,
   UserListParams,
   UserListResult,
   ModulePermission,

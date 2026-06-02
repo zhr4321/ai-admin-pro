@@ -1,28 +1,21 @@
 import { http, HttpResponse } from 'msw'
-import type {
-  ModulePermission,
-  PermissionLevel,
-  UserAccountItem,
-  UserModulePermission,
-  UserSuggestItem,
-} from '@/types/role'
-
-const MODULES = [
-  { key: 'dashboard', name: '首页仪表盘' },
-  { key: 'role', name: '用户权限' },
-  { key: 'user', name: '用户管理' },
-  { key: 'system', name: '系统设置' },
-  { key: 'merchant', name: '商户入驻' },
-  { key: 'visualization', name: '数据可视化' },
-]
-
-function levelFromConfig(config: Record<string, PermissionLevel>): UserModulePermission[] {
-  return MODULES.map((m) => ({
-    moduleKey: m.key,
-    moduleName: m.name,
-    level: config[m.key] ?? 'none',
-  }))
-}
+import { APP_MODULE_KEYS } from '@/config/modules'
+import {
+  buildPermissionConfigItems,
+  isLevelAllowedForModule,
+  normalizeLevelForModule,
+} from '@/config/permission-options'
+import type { ModulePermission, UserModulePermission } from '@/types/role'
+import {
+  exportAllEditPermissions,
+  findUser,
+  getPermissionsByUserId,
+  resolveUserIdFromAuthHeader,
+  saveUserPermissions,
+  users,
+} from '@/mocks/data/users'
+import { requireModuleEdit } from '@/mocks/utils/requireModuleEdit'
+import type { UserSuggestItem } from '@/types/role'
 
 function toModulePermissions(levels: UserModulePermission[]): ModulePermission[] {
   return levels.map((p) => ({
@@ -33,67 +26,7 @@ function toModulePermissions(levels: UserModulePermission[]): ModulePermission[]
   }))
 }
 
-function allEditPermissions(): UserModulePermission[] {
-  return levelFromConfig({
-    dashboard: 'edit',
-    role: 'edit',
-    user: 'edit',
-    system: 'edit',
-  })
-}
-
-interface UserRecord extends UserAccountItem {
-  isSuperAdmin: boolean
-}
-
-let users: UserRecord[] = [
-  { id: 1, username: 'admin', realName: '系统管理员', roleName: '超级管理员', isSuperAdmin: true },
-  { id: 2, username: 'zhangsan', realName: '张三', roleName: '运营人员', isSuperAdmin: false },
-  { id: 3, username: 'lisi', realName: '李四', roleName: '运营人员', isSuperAdmin: false },
-  { id: 4, username: 'wangwu', realName: '王五', roleName: '只读访客', isSuperAdmin: false },
-  { id: 5, username: 'zhaoliu', realName: '赵六', roleName: '只读访客', isSuperAdmin: false },
-  { id: 6, username: 'sunqi', realName: '孙七', roleName: '运营人员', isSuperAdmin: false },
-]
-
-const userPermissionsMap: Record<number, UserModulePermission[]> = {
-  1: allEditPermissions(),
-  2: levelFromConfig({
-    dashboard: 'view',
-    role: 'view',
-    user: 'edit',
-    system: 'none',
-  }),
-  3: levelFromConfig({
-    dashboard: 'view',
-    role: 'none',
-    user: 'view',
-    system: 'none',
-  }),
-  4: levelFromConfig({
-    dashboard: 'view',
-    role: 'view',
-    user: 'none',
-    system: 'none',
-  }),
-  5: levelFromConfig({
-    dashboard: 'view',
-    role: 'none',
-    user: 'none',
-    system: 'none',
-  }),
-  6: levelFromConfig({
-    dashboard: 'edit',
-    role: 'view',
-    user: 'view',
-    system: 'view',
-  }),
-}
-
-function findUser(id: number): UserRecord | undefined {
-  return users.find((u) => u.id === id)
-}
-
-function toSuggestItem(user: UserRecord): UserSuggestItem {
+function toSuggestItem(user: (typeof users)[number]): UserSuggestItem {
   return {
     id: user.id,
     username: user.username,
@@ -104,10 +37,31 @@ function toSuggestItem(user: UserRecord): UserSuggestItem {
 }
 
 function getLoginUserPermissions(authHeader: string | null): ModulePermission[] {
-  if (authHeader?.includes('mock-token-admin')) {
-    return toModulePermissions(userPermissionsMap[1])
+  const userId = resolveUserIdFromAuthHeader(authHeader)
+  if (!userId) return []
+  return toModulePermissions(getPermissionsByUserId(userId))
+}
+
+function validatePermissionPayload(permissions: UserModulePermission[]): string | null {
+  const keys = new Set(permissions.map((p) => p.moduleKey))
+  if (keys.size !== permissions.length) {
+    return '权限配置存在重复模块'
   }
-  return toModulePermissions(userPermissionsMap[4])
+  for (const key of APP_MODULE_KEYS) {
+    if (!keys.has(key)) {
+      return '权限配置缺少模块项'
+    }
+  }
+  for (const item of permissions) {
+    if (!APP_MODULE_KEYS.includes(item.moduleKey)) {
+      return `未知模块：${item.moduleKey}`
+    }
+    const level = normalizeLevelForModule(item.moduleKey, item.level)
+    if (!isLevelAllowedForModule(item.moduleKey, level)) {
+      return `${item.moduleName} 的权限级别不合法`
+    }
+  }
+  return null
 }
 
 export const roleHandlers = [
@@ -160,9 +114,9 @@ export const roleHandlers = [
     }
 
     const isLocked = user.isSuperAdmin
-    const permissions = isLocked
-      ? allEditPermissions()
-      : (userPermissionsMap[id] ?? []).map((p) => ({ ...p }))
+    const storedPermissions = isLocked
+      ? exportAllEditPermissions()
+      : getPermissionsByUserId(id)
 
     return HttpResponse.json({
       code: 0,
@@ -174,7 +128,7 @@ export const roleHandlers = [
           realName: user.realName,
           roleName: user.roleName,
         },
-        permissions,
+        permissions: buildPermissionConfigItems(storedPermissions),
         isLocked,
       },
     })
@@ -196,7 +150,9 @@ export const roleHandlers = [
     }
 
     const start = (page - 1) * pageSize
-    const list = filtered.slice(start, start + pageSize).map(({ isSuperAdmin: _, ...rest }) => rest)
+    const list = filtered
+      .slice(start, start + pageSize)
+      .map(({ isSuperAdmin: _, password: __, profile: ___, ...rest }) => rest)
 
     return HttpResponse.json({
       code: 0,
@@ -207,8 +163,8 @@ export const roleHandlers = [
 
   http.get('/api/users/:id/permissions', ({ params }) => {
     const id = Number(params.id)
-    const permissions = userPermissionsMap[id]
-    if (!permissions) {
+    const user = findUser(id)
+    if (!user) {
       return HttpResponse.json(
         { code: 404, message: '用户不存在', data: null },
         { status: 404 },
@@ -217,11 +173,16 @@ export const roleHandlers = [
     return HttpResponse.json({
       code: 0,
       message: 'success',
-      data: permissions.map((p) => ({ ...p })),
+      data: getPermissionsByUserId(id),
     })
   }),
 
   http.put('/api/users/:id/permissions', async ({ params, request }) => {
+    const guard = requireModuleEdit(request, 'role')
+    if (!guard.ok) {
+      return guard.response
+    }
+
     const id = Number(params.id)
     const user = findUser(id)
     if (!user) {
@@ -239,12 +200,23 @@ export const roleHandlers = [
     }
 
     const body = (await request.json()) as { permissions: UserModulePermission[] }
-    userPermissionsMap[id] = body.permissions.map((p) => ({ ...p }))
+    const validationError = validatePermissionPayload(body.permissions)
+    if (validationError) {
+      return HttpResponse.json({ code: 400, message: validationError, data: null })
+    }
+
+    const saved = saveUserPermissions(id, body.permissions)
+    if (!saved) {
+      return HttpResponse.json(
+        { code: 403, message: '权限保存失败', data: null },
+        { status: 403 },
+      )
+    }
 
     return HttpResponse.json({
       code: 0,
       message: '保存成功',
-      data: userPermissionsMap[id].map((p) => ({ ...p })),
+      data: saved,
     })
   }),
 ]

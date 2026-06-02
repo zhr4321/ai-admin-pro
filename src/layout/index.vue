@@ -1,43 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import type { Component } from 'vue'
 import type { MenuInstance } from 'element-plus'
 import {
-  Bell,
-  DataAnalysis,
-  Document,
   Expand,
-  Flag,
   Fold,
-  HomeFilled,
-  Promotion,
-  Setting,
   SwitchButton,
-  Tools,
-  TrendCharts,
   User,
-  UserFilled,
 } from '@element-plus/icons-vue'
+import { isMenuGroup, MENU_ITEMS, type MenuItemConfig } from '@/config/modules'
 import { useUserStore } from '@/stores/user'
-
-interface MenuLeaf {
-  path: string
-  title: string
-  icon: Component
-}
-
-interface MenuGroup {
-  title: string
-  icon: Component
-  children: MenuLeaf[]
-}
-
-type MenuItem = MenuLeaf | MenuGroup
-
-function isMenuGroup(item: MenuItem): item is MenuGroup {
-  return 'children' in item
-}
 
 const route = useRoute()
 const router = useRouter()
@@ -47,40 +19,34 @@ const userStore = useUserStore()
 
 const activeMenu = computed(() => route.path)
 
-const menuItems: MenuItem[] = [
-  { path: '/dashboard', title: '首页', icon: HomeFilled },
-  { path: '/role', title: '用户权限', icon: UserFilled },
-  {
-    title: '系统管理',
-    icon: Setting,
-    children: [
-      { path: '/settings', title: '系统设置', icon: Tools },
-      { path: '/merchant/onboarding', title: '商户入驻', icon: Document },
-    ],
-  },
-  {
-    title: '运营中心',
-    icon: Promotion,
-    children: [
-      { path: '/operations/campaign', title: '活动推广', icon: Flag },
-      { path: '/operations/notice', title: '公告管理', icon: Bell },
-    ],
-  },
-  {
-    title: '数据中心',
-    icon: DataAnalysis,
-    children: [
-      { path: '/data-center/visualization', title: '数据可视化', icon: TrendCharts },
-    ],
-  },
-]
+const visibleMenuItems = computed<MenuItemConfig[]>(() => {
+  const result: MenuItemConfig[] = []
+
+  for (const item of MENU_ITEMS) {
+    if (!isMenuGroup(item)) {
+      if (userStore.hasModuleView(item.moduleKey)) {
+        result.push(item)
+      }
+      continue
+    }
+
+    const children = item.children.filter((child) =>
+      userStore.hasModuleView(child.moduleKey),
+    )
+    if (children.length > 0) {
+      result.push({ ...item, children })
+    }
+  }
+
+  return result
+})
 
 function syncOpenedSubMenuByRoute() {
   if (!menuRef.value) {
     return
   }
 
-  for (const item of menuItems) {
+  for (const item of visibleMenuItems.value) {
     if (isMenuGroup(item) && item.children.some((child) => child.path === route.path)) {
       menuRef.value.open(item.title)
       return
@@ -136,7 +102,7 @@ onUnmounted(() => {
         text-color="var(--sidebar-text)"
         active-text-color="var(--sidebar-active)"
       >
-        <template v-for="item in menuItems">
+        <template v-for="item in visibleMenuItems">
           <el-menu-item v-if="!isMenuGroup(item)" :key="item.path" :index="item.path">
             <el-icon><component :is="item.icon" /></el-icon>
             <template #title>{{ item.title }}</template>

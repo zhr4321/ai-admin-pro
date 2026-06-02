@@ -16,6 +16,7 @@ import {
   updateCampaign,
 } from '@/api/campaign'
 import { useCrudTableHeight } from '@/composables/useCrudTableHeight'
+import { useModulePermission } from '@/composables/useModulePermission'
 import type {
   CampaignChannel,
   CampaignFormParams,
@@ -29,12 +30,14 @@ import {
   type ExcelColumn,
 } from '@/utils/excel'
 
-const toolbarConfig = {
-  create: true,
-  downloadTemplate: true,
-  export: true,
-  import: true,
-} as const
+const { canEdit } = useModulePermission('campaign')
+
+const toolbarConfig = computed(() => ({
+  create: canEdit.value,
+  downloadTemplate: canEdit.value,
+  export: canEdit.value,
+  import: canEdit.value,
+}))
 
 const MODULE_TITLE = '活动推广列表'
 const EXPORT_TYPE_NAME = '活动推广'
@@ -255,6 +258,7 @@ function fillFormFromRow(row: CampaignItem) {
 }
 
 function handleCreate() {
+  if (!canEdit.value) return
   formDialogMode.value = 'create'
   resetFormModel()
   formDialogVisible.value = true
@@ -266,6 +270,7 @@ function handleView(row: CampaignItem) {
 }
 
 function handleEdit(row: CampaignItem) {
+  if (!canEdit.value) return
   formDialogMode.value = 'edit'
   fillFormFromRow(row)
   formDialogVisible.value = true
@@ -287,7 +292,7 @@ function handleFormReset() {
 }
 
 async function handleFormSubmit() {
-  if (!formRef.value) return
+  if (!canEdit.value || !formRef.value) return
   await formRef.value.validate(async (valid) => {
     if (!valid) return
     submitting.value = true
@@ -318,6 +323,7 @@ async function handleFormSubmit() {
 }
 
 async function handleDelete(row: CampaignItem) {
+  if (!canEdit.value) return
   try {
     await ElMessageBox.confirm('是否删除', '提示', {
       type: 'warning',
@@ -336,6 +342,7 @@ async function handleDelete(row: CampaignItem) {
 }
 
 function handleDownloadTemplate() {
+  if (!canEdit.value) return
   ElMessage.info('正在下载模板…')
   try {
     downloadStaticFile(TEMPLATE_STATIC_URL, TEMPLATE_DOWNLOAD_NAME)
@@ -346,7 +353,7 @@ function handleDownloadTemplate() {
 }
 
 async function handleExport() {
-  if (exporting.value) return
+  if (!canEdit.value || exporting.value) return
   ElMessage.info('正在导出，请稍候…')
   exporting.value = true
   try {
@@ -366,7 +373,7 @@ async function handleExport() {
 }
 
 function handleImportChange(uploadFile: UploadFile) {
-  if (!uploadFile.raw) return
+  if (!canEdit.value || !uploadFile.raw) return
   handleImportFile(uploadFile.raw)
 }
 
@@ -530,8 +537,8 @@ onMounted(() => {
             <el-table-column label="操作" fixed="right" width="200" align="center">
               <template #default="{ row }">
                 <el-button link type="primary" @click="handleView(row)">查看</el-button>
-                <el-button link type="primary" @click="handleEdit(row)">修改</el-button>
-                <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+                <el-button v-if="canEdit" link type="primary" @click="handleEdit(row)">修改</el-button>
+                <el-button v-if="canEdit" link type="danger" @click="handleDelete(row)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -633,10 +640,12 @@ onMounted(() => {
       </el-form>
       <template #footer>
         <el-button @click="formDialogVisible = false">取消</el-button>
-        <el-button @click="handleFormReset">重置</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleFormSubmit">
-          提交
-        </el-button>
+        <template v-if="canEdit">
+          <el-button @click="handleFormReset">重置</el-button>
+          <el-button type="primary" :loading="submitting" @click="handleFormSubmit">
+            提交
+          </el-button>
+        </template>
       </template>
     </el-dialog>
   </div>

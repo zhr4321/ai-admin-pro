@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import type { NoticeFormParams, NoticeItem, NoticeStatus } from '@/types/notice'
+import { requireModuleEdit } from '@/mocks/utils/requireModuleEdit'
 
 let nextId = 7
 
@@ -91,6 +92,9 @@ export const noticeHandlers = [
   }),
 
   http.post('/api/operations/notices', async ({ request }) => {
+    const guard = requireModuleEdit(request, 'notice')
+    if (!guard.ok) return guard.response
+
     const body = (await request.json()) as NoticeFormParams
     const item: NoticeItem = {
       id: nextId++,
@@ -105,6 +109,9 @@ export const noticeHandlers = [
   }),
 
   http.put('/api/operations/notices/:id', async ({ params, request }) => {
+    const guard = requireModuleEdit(request, 'notice')
+    if (!guard.ok) return guard.response
+
     const id = Number(params.id)
     const body = (await request.json()) as NoticeFormParams
     const idx = notices.findIndex((item) => item.id === id)
@@ -120,13 +127,19 @@ export const noticeHandlers = [
     return HttpResponse.json({ code: 0, message: 'success', data: notices[idx] })
   }),
 
-  http.delete('/api/operations/notices/:id', ({ params }) => {
+  http.delete('/api/operations/notices/:id', ({ params, request }) => {
+    const guard = requireModuleEdit(request, 'notice')
+    if (!guard.ok) return guard.response
+
     const id = Number(params.id)
     notices = notices.filter((item) => item.id !== id)
     return HttpResponse.json({ code: 0, message: 'success', data: null })
   }),
 
   http.post('/api/operations/notices/import', async ({ request }) => {
+    const guard = requireModuleEdit(request, 'notice')
+    if (!guard.ok) return guard.response
+
     const form = await request.formData()
     const file = form.get('file')
     if (!file || !(file instanceof File)) {

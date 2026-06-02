@@ -1,0 +1,38 @@
+---
+description: 新增或变更侧边栏菜单时同步维护权限模块配置
+alwaysApply: true
+---
+
+# 菜单权限同步规则
+
+新增、重命名或删除侧边栏菜单时，必须同步更新以下文件，确保菜单、路由、权限配置与 Mock 数据一致。
+
+## 必改清单
+
+1. **`src/config/modules.ts`**
+   - 更新 `APP_MODULES`（`moduleKey`、`moduleName`、`path`）
+   - 更新 `MENU_ITEMS`（侧边栏分组与叶子节点）
+
+2. **`src/router/index.ts`**
+   - 对应路由 `meta.moduleKey` 与 `APP_MODULES` 中的 `moduleKey` 一致
+   - `/profile` 不参与模块权限，不设置 `moduleKey`
+
+3. **`src/mocks/data/users.ts`**
+   - 更新 `allEditPermissions` 覆盖范围（通过 `buildDefaultPermissions` 自动包含新模块）
+   - 检查各演示用户的默认权限配置是否需要调整
+
+4. **页面写操作**
+   - 若新页面含新增/修改/删除/导入/导出/下载模板等写操作，接入 `useModulePermission(moduleKey)` 控制按钮显示
+
+5. **`.cursor/prompts/role-management.md`**
+   - 更新「功能模块」表格，与 `APP_MODULES` 保持一致
+
+## 权限语义
+
+| level | 菜单 | 页面访问 | 写操作 |
+|-------|------|----------|--------|
+| none | 隐藏 | 路由拦截跳转首页 | — |
+| view | 显示 | 可进入 | 隐藏写操作按钮 |
+| edit | 显示 | 可进入 | 全部可用 |
+
+用户信息接口 `GET /auth/userinfo` 返回 `permissions` 数组，前端以 Pinia `userStore` 为单一数据源，不要绕过 store 直接调 `getUserInfo` 后仅更新页面本地状态。

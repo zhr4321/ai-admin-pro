@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
-  getCurrentPermissions,
   getUserPermissionConfig,
   suggestUsers,
   updateUserPermissions,
 } from '@/api/role'
+import { useModulePermission } from '@/composables/useModulePermission'
+import { toStoredPermissions } from '@/config/permission-options'
 import {
-  PERMISSION_LEVEL_OPTIONS,
   type PermissionLevel,
   type UserAccountItem,
-  type UserModulePermission,
+  type UserModulePermissionConfigItem,
   type UserSuggestItem,
 } from '@/types/role'
 
@@ -28,16 +28,16 @@ const isLocked = ref(false)
 const moduleKeyword = ref('')
 const permLoading = ref(false)
 const saving = ref(false)
-const allPermissions = ref<UserModulePermission[]>([])
+const allPermissions = ref<UserModulePermissionConfigItem[]>([])
 
-const canEdit = ref(false)
+const { canEdit } = useModulePermission('role')
 
 const filteredPermissions = computed(() => {
   const kw = moduleKeyword.value.trim().toLowerCase()
   if (!kw) return allPermissions.value
   return allPermissions.value.filter(
     (p) =>
-      p.moduleName.toLowerCase().includes(kw) ||
+      p.permissionName.toLowerCase().includes(kw) ||
       p.moduleKey.toLowerCase().includes(kw),
   )
 })
@@ -69,16 +69,6 @@ function highlightSegments(text: string, keyword: string): HighlightSegment[] {
   }
 
   return segments.length > 0 ? segments : [{ text, match: false }]
-}
-
-async function loadCanEdit() {
-  try {
-    const data = await getCurrentPermissions()
-    const rolePerm = data.permissions.find((p) => p.moduleKey === 'role')
-    canEdit.value = !!rolePerm?.edit
-  } catch {
-    canEdit.value = false
-  }
 }
 
 async function fetchSuggestions(
@@ -133,15 +123,18 @@ async function loadPermissionConfig(userId: number) {
   }
 }
 
-function handleLevelChange(row: UserModulePermission, level: PermissionLevel) {
+function handleLevelChange(row: UserModulePermissionConfigItem, level: PermissionLevel) {
   row.level = level
 }
 
 async function handleSave() {
-  if (!selectedUser.value || isLocked.value) return
+  if (!selectedUser.value || isLocked.value || !canEdit.value) return
   saving.value = true
   try {
-    await updateUserPermissions(selectedUser.value.id, allPermissions.value)
+    await updateUserPermissions(
+      selectedUser.value.id,
+      toStoredPermissions(allPermissions.value),
+    )
     ElMessage.success('权限保存成功')
   } catch {
     // 错误由拦截器处理
@@ -150,9 +143,6 @@ async function handleSave() {
   }
 }
 
-onMounted(() => {
-  loadCanEdit()
-})
 </script>
 
 <template>
@@ -246,7 +236,7 @@ onMounted(() => {
             :key="item.moduleKey"
             class="perm-row"
           >
-            <span class="perm-module-name">{{ item.moduleName }}</span>
+            <span class="perm-module-name">{{ item.permissionName }}</span>
             <el-select
               :model-value="item.level"
               :disabled="!canEdit || isLocked"
@@ -255,7 +245,7 @@ onMounted(() => {
               @update:model-value="(v: PermissionLevel) => handleLevelChange(item, v)"
             >
               <el-option
-                v-for="opt in PERMISSION_LEVEL_OPTIONS"
+                v-for="opt in item.options"
                 :key="opt.value"
                 :label="opt.label"
                 :value="opt.value"

@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import type { OnboardingFormParams } from '@/types/merchant'
+import { requireModuleEdit } from '@/mocks/utils/requireModuleEdit'
 import { containsForbiddenWord, PHONE_PATTERN } from '@/utils/validators'
 
 function validateOnboarding(body: OnboardingFormParams): string | null {
@@ -16,19 +17,10 @@ function validateOnboarding(body: OnboardingFormParams): string | null {
   return null
 }
 
-function requireAuth(request: Request): boolean {
-  const auth = request.headers.get('Authorization')
-  return Boolean(auth?.startsWith('Bearer '))
-}
-
 export const merchantHandlers = [
   http.post('/api/merchant/onboarding', async ({ request }) => {
-    if (!requireAuth(request)) {
-      return HttpResponse.json(
-        { code: 401, message: '未登录', data: null },
-        { status: 401 },
-      )
-    }
+    const guard = requireModuleEdit(request, 'merchant')
+    if (!guard.ok) return guard.response
 
     const body = (await request.json()) as OnboardingFormParams
     const error = validateOnboarding(body)

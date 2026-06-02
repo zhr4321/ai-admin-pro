@@ -1,3 +1,5 @@
+import type { UserModulePermission } from '@/types/role'
+
 export interface LoginParams {
   username: string
   password: string
@@ -21,6 +23,7 @@ export interface UserInfo {
   remark?: string
   projectRole: string
   roles: string[]
+  permissions: UserModulePermission[]
 }
 
 export interface UpdateProfileParams {

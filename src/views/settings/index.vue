@@ -3,10 +3,13 @@ import { onMounted, reactive, ref, watch } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage, type FormInstance, type FormRules, type UploadRequestOptions } from 'element-plus'
 import { getSettings, updateSettings, uploadSettingsLogo } from '@/api/settings'
+import { useModulePermission } from '@/composables/useModulePermission'
 import type { SystemSettings, UpdateSettingsParams } from '@/types/settings'
 import { createForbiddenWordRule } from '@/utils/validators'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const { canEdit } = useModulePermission('system')
 
 const loading = ref(false)
 const saving = ref(false)
@@ -94,6 +97,7 @@ function handleCancel() {
 }
 
 async function handleLogoUpload(options: UploadRequestOptions) {
+  if (!canEdit.value) return
   uploading.value = true
   try {
     const { url } = await uploadSettingsLogo(options.file as File)
@@ -108,7 +112,7 @@ async function handleLogoUpload(options: UploadRequestOptions) {
 }
 
 async function handleSave() {
-  if (!formRef.value || !settings.value) return
+  if (!canEdit.value || !formRef.value || !settings.value) return
   await formRef.value.validate(async (valid) => {
     if (!valid) return
     saving.value = true
@@ -145,7 +149,7 @@ onMounted(() => {
       <template #header>
         <div class="form-card-header">
           <span class="card-title">系统设置</span>
-          <el-button v-if="!isEditing && settings" type="primary" @click="handleEdit">
+          <el-button v-if="canEdit && !isEditing && settings" type="primary" @click="handleEdit">
             修改
           </el-button>
         </div>
@@ -195,6 +199,7 @@ onMounted(() => {
           />
           <div v-else class="settings-logo-placeholder">暂无 Logo</div>
           <el-upload
+            v-if="canEdit"
             :show-file-list="false"
             accept="image/*"
             :disabled="uploading"
@@ -252,7 +257,7 @@ onMounted(() => {
         </main>
       </div>
 
-      <div v-if="isEditing && settings" class="form-footer">
+      <div v-if="canEdit && isEditing && settings" class="form-footer">
         <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
         <el-button @click="handleCancel">取消</el-button>
       </div>

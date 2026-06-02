@@ -39,7 +39,7 @@ npm run build
 
 浏览器访问 `http://localhost:5173`：
 
-- 登录页：`/login`（默认账号 `admin` / `123456`）
+- 登录页：`/login`
 - 首页：`/dashboard`
 - 运营中心 → 活动推广：`/operations/campaign`
 - 运营中心 → 公告管理：`/operations/notice`
@@ -57,16 +57,27 @@ npm run build
 
 - **开发环境**：`npm run dev` 时自动启动 MSW（控制台出现 `[MSW] Mocking enabled.`）
 - **生产环境**：不启动 MSW，需对接真实后端
-- **测试账号**：`admin` / `123456`
+
+### 测试账号（密码均为 `123456`）
+
+| 账号 | 说明 |
+|------|------|
+| `admin` | 超级管理员，全部模块可修改，权限页锁定不可改 |
+| `viewer` | 受限访客，用于演示侧栏按权限显隐、路由拦截与写操作按钮隐藏 |
+
+用户权限管理页可搜索并配置 `zhangsan`、`lisi` 等 Mock 用户的模块权限（见 `src/mocks/data/users.ts`）。
 
 ### 相关目录
 
 | 目录 | 说明 |
 |------|------|
 | `src/api/` | axios 实例与接口封装（`request.ts` 统一拦截） |
+| `src/mocks/data/` | 用户、权限等集中 Mock 数据 |
 | `src/mocks/handlers/` | MSW 路由 handler，按模块拆分 |
+| `src/mocks/utils/` | Mock 工具（如写操作权限校验 `requireModuleEdit`） |
 | `src/types/` | 接口请求/响应类型（含 `PageParams` / `PageResult` 分页） |
-| `src/composables/` | 可复用组合式函数（如 `useCrudTableHeight`） |
+| `src/config/` | 功能模块与侧栏菜单单一数据源（`APP_MODULES`、`MENU_ITEMS`） |
+| `src/composables/` | 可复用组合式函数（如 `useCrudTableHeight`、`useModulePermission`） |
 | `src/styles/crud-page.scss` | 表格 CRUD 列表页统一样式 |
 | `src/styles/form-page.scss` | 表单页统一样式（查看/编辑、向导、登录等） |
 | `src/utils/preloadRoutes.ts` | 登录后空闲预加载表单页 chunk，减轻首次进入卡顿 |
@@ -101,6 +112,7 @@ npm run build
 | `style.mdc` | 色彩、排版、圆角、响应式与交互约定 |
 | `api-request.mdc` | 接口请求封装、调用方式与错误处理 |
 | `api-mock.mdc` | MSW 本地 Mock 与 handler 约定 |
+| `menu-permission.mdc` | 菜单/路由/权限模块同步维护（alwaysApply） |
 | `_template.mdc` | 新建规则的空白模板 |
 
 ## 设计体系
@@ -114,6 +126,23 @@ npm run build
 - Element Plus 中文 locale（分页等组件文案）
 
 详见 `.cursor/rules/style.mdc`。
+
+## 模块权限（RBAC）
+
+基于 `GET /auth/userinfo` 返回的 `permissions` 数组，由 Pinia `userStore` 统一驱动侧栏、路由与页面写操作。
+
+| level | 侧栏菜单 | 路由访问 | 写操作（新增/保存/导入等） |
+|-------|----------|----------|---------------------------|
+| `none` | 隐藏 | 拦截并提示，跳转首页 | — |
+| `view` | 显示 | 可进入 | 隐藏写操作按钮 |
+| `edit` | 显示 | 可进入 | 全部可用 |
+
+- **配置源**：`src/config/modules.ts`（`APP_MODULES` + `MENU_ITEMS`），路由 `meta.moduleKey` 与之对齐
+- **页面侧**：`useModulePermission(moduleKey)` 或 `userStore.hasModuleEdit(moduleKey)`
+- **Mock 写接口**：`src/mocks/utils/requireModuleEdit.ts` 校验当前 Token 对应用户权限
+- **新增菜单**：按 `.cursor/rules/menu-permission.mdc` 同步改 modules、router、mock 数据与 `role-management` prompt
+
+商户入驻（`merchant`）权限选项为「无 / 可操作」，其余模块为「无 / 可查看 / 可修改」。
 
 ### Prompts（`.cursor/prompts/`）
 
@@ -152,7 +181,7 @@ npm run build
 - [x] 表单模块 Skill（`admin-form`：查看/编辑、全页表单、向导、联动、form-page.scss）
 - [x] 表单业务页示范（系统设置 view-edit、商户入驻 wizard）
 - [x] 路由与菜单性能优化（Layout 常驻、子菜单无动画、MSW 静默 bypass、路由预加载）
-- [ ] RBAC 进阶（动态菜单、按钮级权限）
+- [x] 模块权限 RBAC（动态菜单、`meta.moduleKey` 路由守卫、写操作按钮与 Mock 写接口校验）
 - [x] 图表仪表盘（ECharts 数据可视化）
 - [ ] 系统设置进阶（主题切换、国际化）
 
@@ -161,10 +190,11 @@ npm run build
 ```
 src/
 ├── api/             # axios 封装与接口（含 campaign、notice、settings、merchant 等）
-├── composables/     # 组合式函数（useCrudTableHeight 等）
-├── mocks/           # MSW handlers
+├── config/          # APP_MODULES、MENU_ITEMS、各模块权限选项
+├── composables/     # 组合式函数（useCrudTableHeight、useModulePermission 等）
+├── mocks/           # MSW（data/ 用户权限、handlers/、utils/ 写权限校验）
 ├── styles/          # 全局样式与设计令牌（含 crud-page.scss、form-page.scss）
-├── utils/           # 工具函数（download、excel、preloadRoutes 等）
+├── utils/           # 工具函数（permission、download、excel、preloadRoutes 等）
 ├── layout/          # 后台布局（侧边栏 + 顶栏，支持子菜单）
 ├── router/          # 路由配置
 ├── types/           # 公共类型定义
@@ -196,8 +226,6 @@ text/                # Skill 需求原文（admin-crud-table、admin-form 等）
 - **MSW**：开发环境仅对 `/api/` 未匹配请求 warn，Vite 模块请求静默 bypass
 - **预加载**：登录/会话恢复后通过 `requestIdleCallback` 预加载 settings、onboarding chunk
 - **向导页**：商户入驻按步骤 `v-if` 挂载表单，避免三步校验同时初始化
-
-```
 
 ## 仓库地址
 
