@@ -3,6 +3,9 @@ export async function startMockWorker() {
 
   const { worker } = await import('./browser')
   await worker.start({
-    onUnhandledRequest: 'warn',
+    onUnhandledRequest(request) {
+      if (!request.url.includes('/api/')) return
+      console.warn('[MSW] Unhandled:', request.method, request.url)
+    },
   })
 }

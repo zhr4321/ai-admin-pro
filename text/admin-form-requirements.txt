@@ -1,0 +1,51 @@
+表单模块 Skill 需求（admin-form）：
+
+1. 页内查看/编辑切换（如个人信息）：
+   - 卡片 header 左侧标题，查看态右侧「修改」按钮
+   - 查看态用 el-descriptions 只读展示；编辑态用 el-form + form-grid 双列布局
+   - 编辑态页脚「保存」「取消」；取消仅退出编辑并 clearValidate，再次进入编辑时重新 fillFormFromData
+   - 可选双栏：左侧 aside（头像/摘要），右侧 form-main
+
+2. 全页新建/编辑（非弹窗）：
+   - 根节点 form-page + form-card，header 含标题与「返回」
+   - el-form label-width 140px（紧凑场景 100px），form-grid 双列
+   - 页脚「提交」「重置」「返回」；重置恢复 defaultFormModel 或编辑 snapshot
+   - 编辑模式进入页时 loadDetail 并 fillFormFromRow
+
+3. 分步向导（el-steps）：
+   - 根节点 form-page form-page--wizard
+   - 顶部 el-steps，下方按 activeStep 切换步骤内容
+   - 每步独立校验后再 next；最后一步「提交」
+   - 按钮：第一步仅「下一步」；中间步「上一步」「下一步」；末步「上一步」「提交」
+   - 重置：步骤回 0 + 各步 model 恢复默认
+
+4. 复杂联动：
+   - 字段 A 变化时用 watch 清空或重置依赖字段 B/C
+   - 条件表单项用 v-if 包裹 el-form-item
+   - el-upload 通过 http-request 写回 model 字段，成功/失败 ElMessage
+   - 禁止过度抽象 composable，首版用 watch + v-if 即可
+
+5. 登录/简洁表单：
+   - 根节点 form-page--login，全屏居中卡片，无 label（仅 prop）
+   - size="large"，密码框 Enter 触发提交，主按钮全宽 type="primary"
+   - 不在 Layout 内时使用独立路由（如 /login）
+
+6. 配置页（非 el-form）：
+   - 不使用 el-form / FormRules；参考 role-management.md
+   - 列表 + el-select 等控件直存，底部「保存」按钮
+
+7. 样式：
+   - 必须引入 src/styles/form-page.scss
+   - 页面高度 calc(100vh - 120px)（登录页除外）
+   - form-grid 双列，<768px 单列；禁止硬编码色值
+
+8. 校验与提交：
+   - 使用 FormRules + src/utils/validators.ts（PHONE_PATTERN、createForbiddenWordRule 等）
+   - 提交流程：formRef.validate → trim 字符串 → 调 API → ElMessage.success
+   - 只读字段 :model-value + disabled，不设 prop
+
+9. 边界：
+   - 表格 CRUD + 720px 弹窗表单 → 使用 admin-crud-table，不在本 Skill 重复
+   - 用户权限页 → 使用 role-management.md
+
+10. 生成后须 npm run build 通过；UI 文案中文；diff 最小。

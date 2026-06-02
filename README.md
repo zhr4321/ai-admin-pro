@@ -43,6 +43,8 @@ npm run build
 - 首页：`/dashboard`
 - 运营中心 → 活动推广：`/operations/campaign`
 - 运营中心 → 公告管理：`/operations/notice`
+- 系统管理 → 系统设置：`/settings`（页内查看/编辑 + Logo 上传 + 维护模式联动）
+- 系统管理 → 商户入驻：`/merchant/onboarding`（三步向导表单）
 
 ## 接口与本地 Mock（MSW）
 
@@ -65,6 +67,8 @@ npm run build
 | `src/types/` | 接口请求/响应类型（含 `PageParams` / `PageResult` 分页） |
 | `src/composables/` | 可复用组合式函数（如 `useCrudTableHeight`） |
 | `src/styles/crud-page.scss` | 表格 CRUD 列表页统一样式 |
+| `src/styles/form-page.scss` | 表单页统一样式（查看/编辑、向导、登录等） |
+| `src/utils/preloadRoutes.ts` | 登录后空闲预加载表单页 chunk，减轻首次进入卡顿 |
 | `public/static/` | 导入模板等静态资源（xlsx） |
 
 ### 新增接口步骤
@@ -118,6 +122,7 @@ npm run build
 |------|------|
 | `new-admin-module.md` | 新增后台模块 |
 | `crud-page.md` | 表格 CRUD 页面（推荐配合 `@admin-crud-table`） |
+| `form-page.md` | 表单页面（查看/编辑、全页表单、向导；推荐配合 `@admin-form`） |
 | `bugfix-debug.md` | Bug 排查修复 |
 | `role-management.md` | 用户权限管理（用户搜索 + 模块权限下拉配置） |
 | `_template.md` | 新建 prompt 的空白模板 |
@@ -132,6 +137,7 @@ npm run build
 |-------|------|
 | `admin-module-dev` | 按规范开发后台模块（路由、菜单、页面） |
 | `admin-crud-table` | 统一样式表格 CRUD（可配置工具栏、大弹窗新增、xlsx 模板/导出/导入） |
+| `admin-form` | 统一样式表单页（查看/编辑、全页表单、分步向导、联动、登录表单） |
 | `_template` | 新建 Skill 的空白模板 |
 
 ## 模块路线图
@@ -142,20 +148,22 @@ npm run build
 - [x] 个人信息（查看/编辑、表单校验、头像上传）
 - [x] 表格 CRUD 基础设施（`admin-crud-table` Skill、统一样式、动态表格高度、xlsx 导入/导出）
 - [x] 运营中心（侧边栏子菜单：活动推广、公告管理）
+- [x] 表单模块 Skill（`admin-form`：查看/编辑、全页表单、向导、联动、form-page.scss）
+- [x] 表单业务页示范（系统设置 view-edit、商户入驻 wizard）
+- [x] 路由与菜单性能优化（Layout 常驻、子菜单无动画、MSW 静默 bypass、路由预加载）
 - [ ] RBAC 进阶（动态菜单、按钮级权限）
-- [ ] 表单模块（复杂表单、校验、联动）
 - [ ] 图表仪表盘（ECharts 数据可视化）
-- [ ] 系统设置（主题切换、国际化）
+- [ ] 系统设置进阶（主题切换、国际化）
 
 ## 目录结构
 
 ```
 src/
-├── api/             # axios 封装与接口（含 campaign、notice 等模块）
+├── api/             # axios 封装与接口（含 campaign、notice、settings、merchant 等）
 ├── composables/     # 组合式函数（useCrudTableHeight 等）
 ├── mocks/           # MSW handlers
-├── styles/          # 全局样式与设计令牌（含 crud-page.scss）
-├── utils/           # 工具函数（download、excel 导入导出）
+├── styles/          # 全局样式与设计令牌（含 crud-page.scss、form-page.scss）
+├── utils/           # 工具函数（download、excel、preloadRoutes 等）
 ├── layout/          # 后台布局（侧边栏 + 顶栏，支持子菜单）
 ├── router/          # 路由配置
 ├── types/           # 公共类型定义
@@ -164,6 +172,9 @@ src/
 │   ├── dashboard/   # 首页仪表盘
 │   ├── role/        # 用户权限管理
 │   ├── profile/     # 个人信息
+│   ├── settings/    # 系统设置（@admin-form view-edit 示范）
+│   ├── merchant/    # 商户相关
+│   │   └── onboarding/  # 商户入驻向导（@admin-form wizard 示范）
 │   └── operations/  # 运营中心
 │       ├── campaign/  # 活动推广 CRUD
 │       └── notice/    # 公告管理 CRUD
@@ -172,6 +183,17 @@ src/
 
 public/static/       # 导入模板 xlsx 等静态资源
 scripts/             # 脚本（如 generate-xlsx-template.mjs）
+text/                # Skill 需求原文（admin-crud-table、admin-form 等）
+```
+
+### 性能说明
+
+- **Layout 常驻**：`App.vue` 不使用 `router-view :key`，子路由切换时侧边栏不重建
+- **菜单**：`el-menu` 关闭 `collapse-transition`，启用 `unique-opened`
+- **MSW**：开发环境仅对 `/api/` 未匹配请求 warn，Vite 模块请求静默 bypass
+- **预加载**：登录/会话恢复后通过 `requestIdleCallback` 预加载 settings、onboarding chunk
+- **向导页**：商户入驻按步骤 `v-if` 挂载表单，避免三步校验同时初始化
+
 ```
 
 ## 仓库地址

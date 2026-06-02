@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { login as loginApi, getUserInfo as getUserInfoApi } from '@/api/auth'
 import { TOKEN_KEY } from '@/api/request'
 import type { LoginParams, UserInfo } from '@/types/auth'
+import { preloadFormRouteChunks } from '@/utils/preloadRoutes'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(localStorage.getItem(TOKEN_KEY) || '')
@@ -31,6 +32,7 @@ export const useUserStore = defineStore('user', () => {
     const data = await loginApi(params)
     setToken(data.token)
     await fetchUserInfo()
+    preloadFormRouteChunks()
     return data
   }
 

@@ -1,6 +1,7 @@
 import type { Router } from 'vue-router'
 import { TOKEN_KEY } from '@/api/request'
 import { useUserStore } from '@/stores/user'
+import { preloadFormRouteChunks } from '@/utils/preloadRoutes'
 
 export function setupRouterGuard(router: Router) {
   router.beforeEach(async (to, _from, next) => {
@@ -27,6 +28,7 @@ export function setupRouterGuard(router: Router) {
     if (!userStore.userInfo) {
       try {
         await userStore.fetchUserInfo()
+        preloadFormRouteChunks()
       } catch {
         await userStore.logout(false)
         return next({ path: '/login', query: { redirect: to.fullPath } })

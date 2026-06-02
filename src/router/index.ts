@@ -41,6 +41,18 @@ const router = createRouter({
           meta: { title: '公告管理', requiresAuth: true },
         },
         {
+          path: 'settings',
+          name: 'Settings',
+          component: () => import('@/views/settings/index.vue'),
+          meta: { title: '系统设置', requiresAuth: true },
+        },
+        {
+          path: 'merchant/onboarding',
+          name: 'MerchantOnboarding',
+          component: () => import('@/views/merchant/onboarding/index.vue'),
+          meta: { title: '商户入驻', requiresAuth: true },
+        },
+        {
           path: 'profile',
           name: 'Profile',
           component: () => import('@/views/profile/index.vue'),

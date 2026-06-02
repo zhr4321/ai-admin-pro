@@ -28,6 +28,14 @@ disable-model-invocation: true
 - 统一样式见 `src/styles/crud-page.scss` 与 `.cursor/skills/admin-crud-table/template.vue`
 - 也可参考 `.cursor/prompts/crud-page.md` 补充业务字段说明
 
+## 表单页面额外步骤
+
+若模块需要**表单类页面**（页内查看/编辑、全页新建/编辑、分步向导、登录表单等，**非**表格 CRUD 弹窗），使用 **`@admin-form`** Skill：
+
+- 统一样式见 `src/styles/form-page.scss` 与 `.cursor/skills/admin-form/template-*.vue`
+- 也可参考 `.cursor/prompts/form-page.md` 补充业务字段说明
+- 用户权限等配置列表页见 `.cursor/prompts/role-management.md`，不走 admin-form
+
 ## 检查清单
 
 - [ ] 路由可访问，菜单可跳转

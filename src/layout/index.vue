@@ -4,12 +4,15 @@ import { useRoute, useRouter } from 'vue-router'
 import type { Component } from 'vue'
 import {
   Bell,
+  Document,
   Expand,
   Flag,
   Fold,
   HomeFilled,
   Promotion,
+  Setting,
   SwitchButton,
+  Tools,
   User,
   UserFilled,
 } from '@element-plus/icons-vue'
@@ -51,6 +54,14 @@ const menuItems: MenuItem[] = [
       { path: '/operations/notice', title: '公告管理', icon: Bell },
     ],
   },
+  {
+    title: '系统管理',
+    icon: Setting,
+    children: [
+      { path: '/settings', title: '系统设置', icon: Tools },
+      { path: '/merchant/onboarding', title: '商户入驻', icon: Document },
+    ],
+  },
 ]
 
 function toggleCollapse() {
@@ -89,6 +100,8 @@ onUnmounted(() => {
       <el-menu
         :default-active="activeMenu"
         :collapse="isCollapse"
+        :collapse-transition="false"
+        :unique-opened="true"
         router
         background-color="var(--sidebar-bg)"
         text-color="var(--sidebar-text)"

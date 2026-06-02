@@ -12,6 +12,7 @@ const MODULES = [
   { key: 'role', name: '用户权限' },
   { key: 'user', name: '用户管理' },
   { key: 'system', name: '系统设置' },
+  { key: 'merchant', name: '商户入驻' },
 ]
 
 function levelFromConfig(config: Record<string, PermissionLevel>): UserModulePermission[] {
