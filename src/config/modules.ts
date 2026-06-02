@@ -14,19 +14,19 @@ import {
 
 export interface AppModule {
   moduleKey: string
-  moduleName: string
+  moduleNameKey: string
   path: string
 }
 
 export interface MenuLeafConfig {
   moduleKey: string
   path: string
-  title: string
+  titleKey: string
   icon: Component
 }
 
 export interface MenuGroupConfig {
-  title: string
+  titleKey: string
   icon: Component
   children: MenuLeafConfig[]
 }
@@ -39,43 +39,43 @@ export function isMenuGroup(item: MenuItemConfig): item is MenuGroupConfig {
 
 /** 与侧边栏、权限配置对齐的功能模块清单 */
 export const APP_MODULES: AppModule[] = [
-  { moduleKey: 'dashboard', moduleName: '首页', path: '/dashboard' },
-  { moduleKey: 'role', moduleName: '用户权限', path: '/role' },
-  { moduleKey: 'system', moduleName: '系统设置', path: '/settings' },
-  { moduleKey: 'merchant', moduleName: '商户入驻', path: '/merchant/onboarding' },
-  { moduleKey: 'campaign', moduleName: '活动推广', path: '/operations/campaign' },
-  { moduleKey: 'notice', moduleName: '公告管理', path: '/operations/notice' },
-  { moduleKey: 'visualization', moduleName: '数据可视化', path: '/data-center/visualization' },
+  { moduleKey: 'dashboard', moduleNameKey: 'menu.dashboard', path: '/dashboard' },
+  { moduleKey: 'role', moduleNameKey: 'menu.role', path: '/role' },
+  { moduleKey: 'system', moduleNameKey: 'menu.system', path: '/settings' },
+  { moduleKey: 'merchant', moduleNameKey: 'menu.merchant', path: '/merchant/onboarding' },
+  { moduleKey: 'campaign', moduleNameKey: 'menu.campaign', path: '/operations/campaign' },
+  { moduleKey: 'notice', moduleNameKey: 'menu.notice', path: '/operations/notice' },
+  { moduleKey: 'visualization', moduleNameKey: 'menu.visualization', path: '/data-center/visualization' },
 ]
 
 /** 侧边栏菜单结构（叶子节点绑定 moduleKey） */
 export const MENU_ITEMS: MenuItemConfig[] = [
-  { moduleKey: 'dashboard', path: '/dashboard', title: '首页', icon: HomeFilled },
-  { moduleKey: 'role', path: '/role', title: '用户权限', icon: UserFilled },
+  { moduleKey: 'dashboard', path: '/dashboard', titleKey: 'menu.dashboard', icon: HomeFilled },
+  { moduleKey: 'role', path: '/role', titleKey: 'menu.role', icon: UserFilled },
   {
-    title: '系统管理',
+    titleKey: 'menu.group.system',
     icon: Setting,
     children: [
-      { moduleKey: 'system', path: '/settings', title: '系统设置', icon: Tools },
-      { moduleKey: 'merchant', path: '/merchant/onboarding', title: '商户入驻', icon: Document },
+      { moduleKey: 'system', path: '/settings', titleKey: 'menu.system', icon: Tools },
+      { moduleKey: 'merchant', path: '/merchant/onboarding', titleKey: 'menu.merchant', icon: Document },
     ],
   },
   {
-    title: '运营中心',
+    titleKey: 'menu.group.operations',
     icon: Promotion,
     children: [
-      { moduleKey: 'campaign', path: '/operations/campaign', title: '活动推广', icon: Flag },
-      { moduleKey: 'notice', path: '/operations/notice', title: '公告管理', icon: Bell },
+      { moduleKey: 'campaign', path: '/operations/campaign', titleKey: 'menu.campaign', icon: Flag },
+      { moduleKey: 'notice', path: '/operations/notice', titleKey: 'menu.notice', icon: Bell },
     ],
   },
   {
-    title: '数据中心',
+    titleKey: 'menu.group.dataCenter',
     icon: DataAnalysis,
     children: [
       {
         moduleKey: 'visualization',
         path: '/data-center/visualization',
-        title: '数据可视化',
+        titleKey: 'menu.visualization',
         icon: TrendCharts,
       },
     ],
@@ -89,3 +89,20 @@ export function getModuleKeyByPath(path: string): string | undefined {
 }
 
 export const APP_MODULE_KEYS = APP_MODULES.map((m) => m.moduleKey)
+
+/** 路由 meta.titleKey 映射 */
+export const ROUTE_TITLE_KEYS: Record<string, string> = {
+  '/login': 'menu.login',
+  '/dashboard': 'menu.dashboard',
+  '/role': 'menu.role',
+  '/operations/campaign': 'menu.campaign',
+  '/operations/notice': 'menu.notice',
+  '/settings': 'menu.system',
+  '/merchant/onboarding': 'menu.merchant',
+  '/data-center/visualization': 'menu.visualization',
+  '/profile': 'menu.profile',
+}
+
+export function getRouteTitleKey(path: string): string | undefined {
+  return ROUTE_TITLE_KEYS[path]
+}

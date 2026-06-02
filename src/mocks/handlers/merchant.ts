@@ -3,17 +3,17 @@ import type { OnboardingFormParams } from '@/types/merchant'
 import { requireModuleEdit } from '@/mocks/utils/requireModuleEdit'
 import { containsForbiddenWord, PHONE_PATTERN } from '@/utils/validators'
 
-function validateOnboarding(body: OnboardingFormParams): string | null {
-  if (!body.merchantName?.trim()) return '商户名称不能为空'
-  if (containsForbiddenWord(body.merchantName)) return '商户名称包含违禁词，请修改'
-  if (!body.merchantType) return '请选择商户类型'
-  if (!body.contactName?.trim()) return '联系人不能为空'
-  if (!body.contactPhone?.trim()) return '联系电话不能为空'
-  if (!PHONE_PATTERN.test(body.contactPhone.trim())) return '联系电话格式不正确'
+function validateOnboarding(body: OnboardingFormParams): { messageKey: string } | null {
+  if (!body.merchantName?.trim()) return { messageKey: 'errors.merchantNameRequired' }
+  if (containsForbiddenWord(body.merchantName)) return { messageKey: 'validation.forbiddenWord' }
+  if (!body.merchantType) return { messageKey: 'errors.merchantTypeRequired' }
+  if (!body.contactName?.trim()) return { messageKey: 'errors.contactNameRequired' }
+  if (!body.contactPhone?.trim()) return { messageKey: 'errors.contactPhoneRequired' }
+  if (!PHONE_PATTERN.test(body.contactPhone.trim())) return { messageKey: 'errors.contactPhoneInvalid' }
   if (body.merchantType === 'enterprise' && !body.businessLicense?.trim()) {
-    return '企业商户请填写营业执照号'
+    return { messageKey: 'errors.licenseNoRequired' }
   }
-  if (body.remark && containsForbiddenWord(body.remark)) return '备注包含违禁词，请修改'
+  if (body.remark && containsForbiddenWord(body.remark)) return { messageKey: 'validation.forbiddenWord' }
   return null
 }
 
@@ -25,12 +25,18 @@ export const merchantHandlers = [
     const body = (await request.json()) as OnboardingFormParams
     const error = validateOnboarding(body)
     if (error) {
-      return HttpResponse.json({ code: 400, message: error, data: null })
+      return HttpResponse.json({
+        code: 400,
+        messageKey: error.messageKey,
+        message: error.messageKey,
+        data: null,
+      })
     }
 
     const applicationNo = `MO${Date.now()}`
     return HttpResponse.json({
       code: 0,
+      messageKey: 'errors.merchantSubmitSuccess',
       message: '提交成功',
       data: { applicationNo },
     })

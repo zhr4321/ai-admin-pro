@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   ElMessage,
   ElMessageBox,
@@ -25,6 +26,7 @@ import {
   type ExcelColumn,
 } from '@/utils/excel'
 
+const { t } = useI18n()
 const { canEdit } = useModulePermission('notice')
 
 const toolbarConfig = computed(() => ({
@@ -34,15 +36,12 @@ const toolbarConfig = computed(() => ({
   import: canEdit.value,
 }))
 
-const MODULE_TITLE = '公告列表'
-const EXPORT_TYPE_NAME = '公告'
 const TEMPLATE_STATIC_URL = '/static/notice-import-template.xlsx'
-const TEMPLATE_DOWNLOAD_NAME = '公告导入模板.xlsx'
 
-const STATUS_OPTIONS = [
-  { label: '草稿', value: 'draft' as const },
-  { label: '已发布', value: 'published' as const },
-]
+const STATUS_OPTIONS = computed(() => [
+  { label: t('notice.statusDraft'), value: 'draft' as const },
+  { label: t('notice.statusPublished'), value: 'published' as const },
+])
 
 const defaultQuery = {
   title: '',
@@ -62,7 +61,7 @@ const listError = ref(false)
 const tableData = ref<NoticeItem[]>([])
 
 const tableEmptyText = computed(() =>
-  listError.value ? '加载失败，请检查网络后重试' : '暂无数据',
+  listError.value ? t('common.loadFailed') : t('common.noData'),
 )
 
 const { tableHeight } = useCrudTableHeight('tableBody')
@@ -80,7 +79,7 @@ const editingId = ref<number | null>(null)
 const editFormSnapshot = ref<NoticeFormParams | null>(null)
 
 const formDialogTitle = computed(() =>
-  formDialogMode.value === 'create' ? '新增公告' : '修改公告',
+  formDialogMode.value === 'create' ? t('notice.formCreate') : t('notice.formEdit'),
 )
 
 const formModel = reactive<NoticeFormParams>({
@@ -89,26 +88,26 @@ const formModel = reactive<NoticeFormParams>({
   status: 'draft',
 })
 
-const rules: FormRules = {
-  title: [{ required: true, message: '请输入公告标题', trigger: 'blur' }],
-  content: [{ required: true, message: '请输入公告内容', trigger: 'blur' }],
-  status: [{ required: true, message: '请选择状态', trigger: 'change' }],
-}
+const rules = computed<FormRules>(() => ({
+  title: [{ required: true, message: t('notice.titleRequired'), trigger: 'blur' }],
+  content: [{ required: true, message: t('notice.contentRequired'), trigger: 'blur' }],
+  status: [{ required: true, message: t('notice.statusRequired'), trigger: 'change' }],
+}))
 
-const exportColumns: ExcelColumn<NoticeItem>[] = [
+const exportColumns = computed<ExcelColumn<NoticeItem>[]>(() => [
   { label: 'ID', key: 'id' },
-  { label: '公告标题', key: 'title' },
-  { label: '发布人', key: 'publisher' },
+  { label: t('notice.title'), key: 'title' },
+  { label: t('notice.publisher'), key: 'publisher' },
   {
-    label: '状态',
+    label: t('common.status'),
     key: 'status',
-    format: (row) => STATUS_OPTIONS.find((o) => o.value === row.status)?.label ?? row.status,
+    format: (row) => STATUS_OPTIONS.value.find((o) => o.value === row.status)?.label ?? row.status,
   },
-  { label: '发布时间', key: 'publishedAt' },
-]
+  { label: t('notice.publishedAt'), key: 'publishedAt' },
+])
 
 function statusLabel(status: NoticeStatus) {
-  return STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status
+  return STATUS_OPTIONS.value.find((o) => o.value === status)?.label ?? status
 }
 
 function buildListParams(pageSize?: number) {
@@ -227,10 +226,10 @@ async function handleFormSubmit() {
       }
       if (formDialogMode.value === 'create') {
         await createNotice(payload)
-        ElMessage.success('新增成功')
+        ElMessage.success(t('common.createSuccess'))
       } else if (editingId.value != null) {
         await updateNotice(editingId.value, payload)
-        ElMessage.success('修改成功')
+        ElMessage.success(t('common.updateSuccess'))
       }
       formDialogVisible.value = false
       fetchList()
@@ -245,13 +244,13 @@ async function handleFormSubmit() {
 async function handleDelete(row: NoticeItem) {
   if (!canEdit.value) return
   try {
-    await ElMessageBox.confirm('是否删除', '提示', {
+    await ElMessageBox.confirm(t('common.deleteConfirm'), t('common.tip'), {
       type: 'warning',
-      confirmButtonText: '是',
-      cancelButtonText: '否',
+      confirmButtonText: t('common.yes'),
+      cancelButtonText: t('common.no'),
     })
     await deleteNotice(row.id)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('common.deleteSuccess'))
     if (tableData.value.length === 1 && pagination.page > 1) {
       pagination.page -= 1
     }
@@ -263,30 +262,30 @@ async function handleDelete(row: NoticeItem) {
 
 function handleDownloadTemplate() {
   if (!canEdit.value) return
-  ElMessage.info('正在下载模板…')
+  ElMessage.info(t('common.downloadingTemplate'))
   try {
-    downloadStaticFile(TEMPLATE_STATIC_URL, TEMPLATE_DOWNLOAD_NAME)
-    ElMessage.success('模板下载成功')
+    downloadStaticFile(TEMPLATE_STATIC_URL, t('notice.templateFileName'))
+    ElMessage.success(t('common.templateDownloadSuccess'))
   } catch {
-    ElMessage.error('模板下载失败，请稍后重试')
+    ElMessage.error(t('common.templateDownloadFailed'))
   }
 }
 
 async function handleExport() {
   if (!canEdit.value || exporting.value) return
-  ElMessage.info('正在导出，请稍候…')
+  ElMessage.info(t('common.exporting'))
   exporting.value = true
   try {
     const rows = await fetchAllForExport()
     if (rows.length === 0) {
-      ElMessage.warning('当前筛选条件下暂无数据可导出')
+      ElMessage.warning(t('common.exportNoData'))
       return
     }
-    const filename = formatExportFilename(EXPORT_TYPE_NAME)
-    exportRowsToXlsx(rows, exportColumns, filename)
-    ElMessage.success('导出成功')
+    const filename = formatExportFilename(t('notice.exportTypeName'))
+    exportRowsToXlsx(rows, exportColumns.value, filename)
+    ElMessage.success(t('common.exportSuccess'))
   } catch {
-    ElMessage.error('导出失败，请稍后重试')
+    ElMessage.error(t('common.exportFailed'))
   } finally {
     exporting.value = false
   }
@@ -299,14 +298,14 @@ function handleImportChange(uploadFile: UploadFile) {
 
 async function handleImportFile(file: File) {
   if (importing.value) return
-  ElMessage.info('正在上传并导入…')
+  ElMessage.info(t('common.importing'))
   importing.value = true
   try {
     await importNotice(file)
-    ElMessage.success('导入成功')
+    ElMessage.success(t('common.importSuccess'))
     clearSearchAndReload()
   } catch {
-    ElMessage.error('导入失败，请检查文件格式后重试')
+    ElMessage.error(t('common.importFailed'))
   } finally {
     importing.value = false
     importUploadRef.value?.clearFiles()
@@ -327,41 +326,41 @@ onMounted(() => {
         label-width="80px"
         @submit.prevent="handleSearch"
       >
-        <el-form-item label="公告标题">
+        <el-form-item :label="t('notice.title')">
           <el-input
             v-model="queryForm.title"
             clearable
-            placeholder="请输入公告标题"
+            :placeholder="t('notice.titlePlaceholder')"
             style="width: 220px"
             @keyup.enter="handleSearch"
           />
         </el-form-item>
         <el-form-item class="crud-search-actions" label-width="0">
-          <el-button type="primary" @click="handleSearch">查询</el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button type="primary" @click="handleSearch">{{ t('common.search') }}</el-button>
+          <el-button @click="handleReset">{{ t('common.reset') }}</el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
     <el-card class="crud-table-card" shadow="never">
       <div class="crud-table-header">
-        <span class="card-title">{{ MODULE_TITLE }}</span>
+        <span class="card-title">{{ t('notice.moduleTitle') }}</span>
         <div class="crud-toolbar-actions">
           <el-button v-if="toolbarConfig.create" type="primary" @click="handleCreate">
-            新增
+            {{ t('common.add') }}
           </el-button>
           <el-button
             v-if="toolbarConfig.downloadTemplate"
             @click="handleDownloadTemplate"
           >
-            下载模板
+            {{ t('common.downloadTemplate') }}
           </el-button>
           <el-button
             v-if="toolbarConfig.export"
             :loading="exporting"
             @click="handleExport"
           >
-            导出
+            {{ t('common.export') }}
           </el-button>
           <el-upload
             v-if="toolbarConfig.import"
@@ -373,7 +372,7 @@ onMounted(() => {
             :disabled="importing"
             :on-change="handleImportChange"
           >
-            <el-button :loading="importing">导入</el-button>
+            <el-button :loading="importing">{{ t('common.import') }}</el-button>
           </el-upload>
         </div>
       </div>
@@ -391,21 +390,21 @@ onMounted(() => {
             style="width: 100%"
           >
             <el-table-column prop="id" label="ID" width="80" />
-            <el-table-column prop="title" label="公告标题" min-width="200" show-overflow-tooltip />
-            <el-table-column prop="publisher" label="发布人" width="120" />
-            <el-table-column prop="status" label="状态" width="100">
+            <el-table-column prop="title" :label="t('notice.title')" min-width="200" show-overflow-tooltip />
+            <el-table-column prop="publisher" :label="t('notice.publisher')" width="120" />
+            <el-table-column prop="status" :label="t('common.status')" width="100">
               <template #default="{ row }">
                 <el-tag :type="row.status === 'published' ? 'success' : 'info'" size="small">
                   {{ statusLabel(row.status) }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="publishedAt" label="发布时间" min-width="170" />
-            <el-table-column label="操作" fixed="right" width="200" align="center">
+            <el-table-column prop="publishedAt" :label="t('notice.publishedAt')" min-width="170" />
+            <el-table-column :label="t('common.actions')" fixed="right" width="200" align="center">
               <template #default="{ row }">
-                <el-button link type="primary" @click="handleView(row)">查看</el-button>
-                <el-button v-if="canEdit" link type="primary" @click="handleEdit(row)">修改</el-button>
-                <el-button v-if="canEdit" link type="danger" @click="handleDelete(row)">删除</el-button>
+                <el-button link type="primary" @click="handleView(row)">{{ t('common.view') }}</el-button>
+                <el-button v-if="canEdit" link type="primary" @click="handleEdit(row)">{{ t('common.edit') }}</el-button>
+                <el-button v-if="canEdit" link type="danger" @click="handleDelete(row)">{{ t('common.delete') }}</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -426,25 +425,25 @@ onMounted(() => {
       </div>
     </el-card>
 
-    <el-dialog v-model="viewDialogVisible" title="查看公告" width="720px" destroy-on-close>
+    <el-dialog v-model="viewDialogVisible" :title="t('notice.viewTitle')" width="720px" destroy-on-close>
       <el-descriptions v-if="viewRow" :column="2" border>
         <el-descriptions-item label="ID">{{ viewRow.id }}</el-descriptions-item>
-        <el-descriptions-item label="公告标题">{{ viewRow.title }}</el-descriptions-item>
-        <el-descriptions-item label="发布人">{{ viewRow.publisher }}</el-descriptions-item>
-        <el-descriptions-item label="状态">
+        <el-descriptions-item :label="t('notice.title')">{{ viewRow.title }}</el-descriptions-item>
+        <el-descriptions-item :label="t('notice.publisher')">{{ viewRow.publisher }}</el-descriptions-item>
+        <el-descriptions-item :label="t('common.status')">
           <el-tag :type="viewRow.status === 'published' ? 'success' : 'info'" size="small">
             {{ statusLabel(viewRow.status) }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="发布时间" :span="2">
+        <el-descriptions-item :label="t('notice.publishedAt')" :span="2">
           {{ viewRow.publishedAt }}
         </el-descriptions-item>
-        <el-descriptions-item label="公告内容" :span="2">
+        <el-descriptions-item :label="t('notice.content')" :span="2">
           {{ viewRow.content }}
         </el-descriptions-item>
       </el-descriptions>
       <template #footer>
-        <el-button @click="viewDialogVisible = false">关闭</el-button>
+        <el-button @click="viewDialogVisible = false">{{ t('common.close') }}</el-button>
       </template>
     </el-dialog>
 
@@ -456,10 +455,10 @@ onMounted(() => {
       @closed="handleFormDialogClosed"
     >
       <el-form ref="formRef" :model="formModel" :rules="rules" label-width="80px">
-        <el-form-item label="公告标题" prop="title">
+        <el-form-item :label="t('notice.title')" prop="title">
           <el-input v-model="formModel.title" maxlength="100" show-word-limit />
         </el-form-item>
-        <el-form-item label="公告内容" prop="content">
+        <el-form-item :label="t('notice.content')" prop="content">
           <el-input
             v-model="formModel.content"
             type="textarea"
@@ -468,7 +467,7 @@ onMounted(() => {
             show-word-limit
           />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item :label="t('common.status')" prop="status">
           <el-select v-model="formModel.status" style="width: 100%">
             <el-option
               v-for="opt in STATUS_OPTIONS"
@@ -480,11 +479,11 @@ onMounted(() => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="formDialogVisible = false">取消</el-button>
+        <el-button @click="formDialogVisible = false">{{ t('common.cancel') }}</el-button>
         <template v-if="canEdit">
-          <el-button @click="handleFormReset">重置</el-button>
+          <el-button @click="handleFormReset">{{ t('common.reset') }}</el-button>
           <el-button type="primary" :loading="submitting" @click="handleFormSubmit">
-            提交
+            {{ t('common.submit') }}
           </el-button>
         </template>
       </template>

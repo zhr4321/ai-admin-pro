@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { User, Document, Setting, DataLine } from '@element-plus/icons-vue'
 import type { Component } from 'vue'
 import { getDashboardStats } from '@/api/dashboard'
 import type { DashboardStatItem } from '@/types/dashboard'
+
+const { t } = useI18n()
 
 const iconMap: Record<string, Component> = {
   User,
@@ -12,8 +15,22 @@ const iconMap: Record<string, Component> = {
   Setting,
 }
 
+const STAT_TITLE_KEYS: Record<string, string> = {
+  用户总数: 'dashboard.stats.userTotal',
+  今日访问: 'dashboard.stats.todayVisit',
+  文档数量: 'dashboard.stats.docCount',
+  系统消息: 'dashboard.stats.systemMsg',
+}
+
 const stats = ref<DashboardStatItem[]>([])
 const loading = ref(false)
+
+const localizedStats = computed(() =>
+  stats.value.map((item) => ({
+    ...item,
+    title: STAT_TITLE_KEYS[item.title] ? t(STAT_TITLE_KEYS[item.title]) : item.title,
+  })),
+)
 
 onMounted(async () => {
   loading.value = true
@@ -31,7 +48,7 @@ onMounted(async () => {
 <template>
   <div v-loading="loading" class="dashboard">
     <el-row :gutter="20">
-      <el-col v-for="item in stats" :key="item.title" :xs="24" :sm="12" :md="6">
+      <el-col v-for="item in localizedStats" :key="item.title" :xs="24" :sm="12" :md="6">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-info">
@@ -48,10 +65,10 @@ onMounted(async () => {
 
     <el-card class="welcome-card" shadow="never">
       <template #header>
-        <span class="welcome-card__title">欢迎使用 AI Admin Pro</span>
+        <span class="welcome-card__title">{{ t('dashboard.welcomeTitle') }}</span>
       </template>
-      <p>这是一个基于 Vue 3 + TypeScript + Element Plus 的后台管理系统脚手架。</p>
-      <p>后续将逐步完善：登录鉴权、RBAC 权限、表格 CRUD、表单、图表等功能模块。</p>
+      <p>{{ t('dashboard.welcomeDesc1') }}</p>
+      <p>{{ t('dashboard.welcomeDesc2') }}</p>
     </el-card>
   </div>
 </template>

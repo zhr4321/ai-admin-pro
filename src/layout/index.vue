@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import type { MenuInstance } from 'element-plus'
 import {
@@ -11,8 +12,10 @@ import {
 import { isMenuGroup, MENU_ITEMS, type MenuItemConfig } from '@/config/modules'
 import { aiChatConfig } from '@/config/ai-chat'
 import AiChatFab from '@/components/ai-chat/AiChatFab.vue'
+import AppPreferencesBar from '@/components/layout/AppPreferencesBar.vue'
 import { useUserStore } from '@/stores/user'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const menuRef = ref<MenuInstance>()
@@ -50,7 +53,7 @@ function syncOpenedSubMenuByRoute() {
 
   for (const item of visibleMenuItems.value) {
     if (isMenuGroup(item) && item.children.some((child) => child.path === route.path)) {
-      menuRef.value.open(item.title)
+      menuRef.value.open(item.titleKey)
       return
     }
   }
@@ -89,7 +92,7 @@ onUnmounted(() => {
   <el-container class="layout-container">
     <el-aside :width="isCollapse ? '64px' : '220px'" class="layout-aside">
       <div class="logo">
-        <span v-if="!isCollapse">AI Admin Pro</span>
+        <span v-if="!isCollapse">{{ t('layout.appName') }}</span>
         <span v-else>A</span>
       </div>
       <el-menu
@@ -107,12 +110,12 @@ onUnmounted(() => {
         <template v-for="item in visibleMenuItems">
           <el-menu-item v-if="!isMenuGroup(item)" :key="item.path" :index="item.path">
             <el-icon><component :is="item.icon" /></el-icon>
-            <template #title>{{ item.title }}</template>
+            <template #title>{{ t(item.titleKey) }}</template>
           </el-menu-item>
-          <el-sub-menu v-else :key="`group-${item.title}`" :index="item.title">
+          <el-sub-menu v-else :key="`group-${item.titleKey}`" :index="item.titleKey">
             <template #title>
               <el-icon><component :is="item.icon" /></el-icon>
-              <span>{{ item.title }}</span>
+              <span>{{ t(item.titleKey) }}</span>
             </template>
             <el-menu-item
               v-for="child in item.children"
@@ -120,7 +123,7 @@ onUnmounted(() => {
               :index="child.path"
             >
               <el-icon><component :is="child.icon" /></el-icon>
-              <template #title>{{ child.title }}</template>
+              <template #title>{{ t(child.titleKey) }}</template>
             </el-menu-item>
           </el-sub-menu>
         </template>
@@ -134,6 +137,7 @@ onUnmounted(() => {
           <Expand v-else />
         </el-icon>
         <div class="header-right">
+          <AppPreferencesBar />
           <el-dropdown>
             <span class="user-info">
               <el-avatar :size="32" :src="userStore.userInfo?.avatar || undefined">
@@ -143,9 +147,11 @@ onUnmounted(() => {
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item :icon="User" @click="goProfile">个人信息</el-dropdown-item>
+                <el-dropdown-item :icon="User" @click="goProfile">
+                  {{ t('layout.profile') }}
+                </el-dropdown-item>
                 <el-dropdown-item :icon="SwitchButton" @click="handleLogout">
-                  退出登录
+                  {{ t('layout.logout') }}
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -171,17 +177,19 @@ onUnmounted(() => {
   overflow: hidden;
   background-color: var(--sidebar-bg);
   transition: width 0.3s;
+  border-right: 1px solid var(--border-color);
 
   .logo {
     display: flex;
     align-items: center;
     justify-content: center;
     height: 60px;
-    color: #fff;
+    color: var(--sidebar-logo-text);
     font-size: var(--font-size-title);
     font-weight: 600;
     line-height: var(--line-height-title);
     background-color: var(--sidebar-bg-dark);
+    border-bottom: 1px solid var(--border-color);
   }
 
   .layout-menu {
@@ -204,7 +212,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
+  background: var(--header-bg);
   box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
 
   .collapse-btn {
@@ -218,6 +226,10 @@ onUnmounted(() => {
   }
 
   .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
     .user-info {
       display: flex;
       align-items: center;

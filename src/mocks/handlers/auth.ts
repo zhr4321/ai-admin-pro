@@ -7,13 +7,17 @@ import {
 } from '@/mocks/data/users'
 import { containsForbiddenWord, PHONE_PATTERN } from '@/utils/validators'
 
-function validateProfilePayload(body: UpdateProfileParams): string | null {
-  if (!body.nickname?.trim()) return '名称不能为空'
-  if (!body.gender) return '请选择性别'
-  if (!body.phone?.trim()) return '联系电话不能为空'
-  if (!PHONE_PATTERN.test(body.phone.trim())) return '联系电话格式不正确'
-  if (containsForbiddenWord(body.nickname)) return '名称包含违禁词，请修改'
-  if (body.remark && containsForbiddenWord(body.remark)) return '个人备注包含违禁词，请修改'
+function validateProfilePayload(body: UpdateProfileParams): { messageKey: string } | null {
+  if (!body.nickname?.trim()) return { messageKey: 'errors.nicknameRequired' }
+  if (!body.gender) return { messageKey: 'errors.genderRequired' }
+  if (!body.phone?.trim()) return { messageKey: 'errors.contactPhoneRequired' }
+  if (!PHONE_PATTERN.test(body.phone.trim())) return { messageKey: 'errors.contactPhoneInvalid' }
+  if (containsForbiddenWord(body.nickname)) {
+    return { messageKey: 'validation.forbiddenWord' }
+  }
+  if (body.remark && containsForbiddenWord(body.remark)) {
+    return { messageKey: 'validation.forbiddenWord' }
+  }
   return null
 }
 
@@ -24,7 +28,7 @@ export const authHandlers = [
 
     if (!result) {
       return HttpResponse.json(
-        { code: 401, message: '用户名或密码错误', data: null },
+        { code: 401, messageKey: 'errors.loginFailed', message: '用户名或密码错误', data: null },
         { status: 401 },
       )
     }
@@ -35,7 +39,7 @@ export const authHandlers = [
     }
     return HttpResponse.json({
       code: 0,
-      message: '登录成功',
+      message: 'success',
       data,
     })
   }),
@@ -44,7 +48,7 @@ export const authHandlers = [
     const userInfo = getUserInfoByAuthHeader(request.headers.get('Authorization'))
     if (!userInfo) {
       return HttpResponse.json(
-        { code: 401, message: '未登录', data: null },
+        { code: 401, messageKey: 'errors.unauthorized', message: '未登录', data: null },
         { status: 401 },
       )
     }
@@ -61,7 +65,7 @@ export const authHandlers = [
     const userInfo = getUserInfoByAuthHeader(authHeader)
     if (!userInfo) {
       return HttpResponse.json(
-        { code: 401, message: '未登录', data: null },
+        { code: 401, messageKey: 'errors.unauthorized', message: '未登录', data: null },
         { status: 401 },
       )
     }
@@ -69,7 +73,12 @@ export const authHandlers = [
     const body = (await request.json()) as UpdateProfileParams
     const error = validateProfilePayload(body)
     if (error) {
-      return HttpResponse.json({ code: 400, message: error, data: null })
+      return HttpResponse.json({
+        code: 400,
+        messageKey: error.messageKey,
+        message: error.messageKey,
+        data: null,
+      })
     }
 
     const updated = updateUserProfile(userInfo.id, {
@@ -82,7 +91,7 @@ export const authHandlers = [
 
     return HttpResponse.json({
       code: 0,
-      message: '保存成功',
+      message: 'success',
       data: updated,
     })
   }),
@@ -91,7 +100,7 @@ export const authHandlers = [
     const userInfo = getUserInfoByAuthHeader(request.headers.get('Authorization'))
     if (!userInfo) {
       return HttpResponse.json(
-        { code: 401, message: '未登录', data: null },
+        { code: 401, messageKey: 'errors.unauthorized', message: '未登录', data: null },
         { status: 401 },
       )
     }
@@ -99,7 +108,12 @@ export const authHandlers = [
     const formData = await request.formData()
     const file = formData.get('file')
     if (!file || !(file instanceof File)) {
-      return HttpResponse.json({ code: 400, message: '请上传头像文件', data: null })
+      return HttpResponse.json({
+        code: 400,
+        messageKey: 'errors.uploadAvatarRequired',
+        message: '请上传头像文件',
+        data: null,
+      })
     }
 
     const arrayBuffer = await file.arrayBuffer()
@@ -113,6 +127,7 @@ export const authHandlers = [
 
     return HttpResponse.json({
       code: 0,
+      messageKey: 'common.uploadSuccess',
       message: '上传成功',
       data: { url: updated?.avatar || url },
     })

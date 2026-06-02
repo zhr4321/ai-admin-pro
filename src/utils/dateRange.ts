@@ -60,27 +60,28 @@ export function isDateDisabled(date: Date, today: Date = getToday()): boolean {
   return current < minDate || current > maxDate
 }
 
+/** 返回 i18n key，无错误时返回 null */
 export function validateDateRange(startDate: string, endDate: string): string | null {
   const start = parseDate(startDate)
   const end = parseDate(endDate)
 
   if (!start || !end) {
-    return '请选择有效的日期区间'
+    return 'validation.dateRangeInvalid'
   }
 
   const today = getToday()
   const minDate = getMinSelectableDate(today)
 
   if (start > today || end > today) {
-    return '不能查询今天之后的日期'
+    return 'validation.dateRangeFuture'
   }
 
   if (start < minDate || end < minDate) {
-    return '最多只能查询近 30 天的数据'
+    return 'validation.dateRangeMaxDays'
   }
 
   if (start > end) {
-    return '开始日期不能晚于结束日期'
+    return 'validation.dateRangeStartAfterEnd'
   }
 
   return null

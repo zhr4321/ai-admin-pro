@@ -1,6 +1,7 @@
 import axios, { type AxiosRequestConfig } from 'axios'
 import { ElMessage } from 'element-plus'
 import type { ApiResponse } from '@/types/api'
+import { resolveApiMessage } from '@/utils/i18nMessage'
 
 export const TOKEN_KEY = 'token'
 
@@ -23,15 +24,17 @@ axiosInstance.interceptors.response.use(
   (response) => {
     const res = response.data as ApiResponse
     if (res.code !== 0) {
-      ElMessage.error(res.message || '请求失败')
-      return Promise.reject(new Error(res.message || '请求失败'))
+      ElMessage.error(resolveApiMessage(res))
+      return Promise.reject(new Error(res.message || resolveApiMessage(res)))
     }
     return res.data as typeof response.data
   },
   async (error) => {
     const status = error.response?.status
-    const message =
-      error.response?.data?.message || error.message || '网络异常，请稍后重试'
+    const data = error.response?.data as ApiResponse | undefined
+    const message = data
+      ? resolveApiMessage(data)
+      : error.message || resolveApiMessage({ messageKey: 'errors.networkError' })
 
     if (status === 401 && !isHandling401) {
       isHandling401 = true
@@ -40,7 +43,11 @@ axiosInstance.interceptors.response.use(
       const { useUserStore } = await import('@/stores/user')
       useUserStore().clearAuth()
 
-      ElMessage.error(error.response?.data?.message || '登录已过期，请重新登录')
+      ElMessage.error(
+        data
+          ? resolveApiMessage(data)
+          : resolveApiMessage({ messageKey: 'errors.sessionExpired' }),
+      )
 
       const { default: router } = await import('@/router')
       if (router.currentRoute.value.path !== '/login') {

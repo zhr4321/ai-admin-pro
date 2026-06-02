@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage, type FormInstance, type FormRules, type UploadRequestOptions } from 'element-plus'
 import { updateProfile, uploadAvatar } from '@/api/auth'
@@ -7,11 +8,14 @@ import { useUserStore } from '@/stores/user'
 import type { Gender, UpdateProfileParams, UserInfo } from '@/types/auth'
 import {
   createForbiddenWordRule,
-  GENDER_LABELS,
+  getGenderLabelKeys,
   PHONE_PATTERN,
 } from '@/utils/validators'
 
+const { t } = useI18n()
 const userStore = useUserStore()
+
+const genderLabelKeys = getGenderLabelKeys()
 
 const loading = ref(false)
 const saving = ref(false)
@@ -28,29 +32,30 @@ const editForm = reactive<UpdateProfileParams>({
   remark: '',
 })
 
-const rules: FormRules = {
+const rules = computed<FormRules>(() => ({
   nickname: [
-    { required: true, message: '请输入名称', trigger: 'blur' },
-    createForbiddenWordRule('名称'),
+    { required: true, message: t('profile.nicknameRequired'), trigger: 'blur' },
+    createForbiddenWordRule(t, 'validation.fieldNickname'),
   ],
-  gender: [{ required: true, message: '请选择性别', trigger: 'change' }],
+  gender: [{ required: true, message: t('profile.genderRequired'), trigger: 'change' }],
   phone: [
-    { required: true, message: '请输入联系电话', trigger: 'blur' },
+    { required: true, message: t('profile.phoneRequired'), trigger: 'blur' },
     {
       pattern: PHONE_PATTERN,
-      message: '联系电话格式不正确',
+      message: t('profile.phoneInvalid'),
       trigger: 'blur',
     },
   ],
-  remark: [createForbiddenWordRule('个人备注')],
-}
+  remark: [createForbiddenWordRule(t, 'validation.fieldProfileRemark')],
+}))
 
 function avatarFallback(name: string) {
   return name.charAt(0).toUpperCase()
 }
 
 function genderLabel(gender: Gender) {
-  return GENDER_LABELS[gender] || '未知'
+  const key = genderLabelKeys[gender]
+  return key ? t(key) : t('profile.genderUnknown')
 }
 
 async function loadProfile() {
@@ -89,9 +94,9 @@ async function handleAvatarUpload(options: UploadRequestOptions) {
     const { url } = await uploadAvatar(options.file as File)
     editForm.avatar = url
     options.onSuccess?.({ url })
-    ElMessage.success('头像上传成功')
+    ElMessage.success(t('profile.avatarUploadSuccess'))
   } catch {
-    options.onError?.(new Error('上传失败') as never)
+    options.onError?.(new Error(t('common.uploadFailed')) as never)
   } finally {
     uploading.value = false
   }
@@ -112,7 +117,7 @@ async function handleSave() {
       })
       profile.value = await userStore.fetchUserInfo()
       isEditing.value = false
-      ElMessage.success('个人信息保存成功')
+      ElMessage.success(t('profile.saveSuccess'))
     } catch {
       // 错误由拦截器处理
     } finally {
@@ -131,14 +136,18 @@ onMounted(() => {
     <el-card shadow="never" class="profile-card">
       <template #header>
         <div class="card-header">
-          <span class="card-title">个人信息</span>
+          <span class="card-title">{{ t('profile.title') }}</span>
           <el-button v-if="!isEditing && profile" type="primary" @click="handleEdit">
-            修改
+            {{ t('common.edit') }}
           </el-button>
         </div>
       </template>
 
-      <el-empty v-if="!loading && !profile" description="无法加载个人信息" class="profile-empty" />
+      <el-empty
+        v-if="!loading && !profile"
+        :description="t('profile.loadFailed')"
+        class="profile-empty"
+      />
 
       <!-- 查看模式 -->
       <div v-else-if="!isEditing && profile" class="profile-body">
@@ -155,13 +164,25 @@ onMounted(() => {
 
         <main class="profile-main">
           <el-descriptions :column="2" border class="profile-desc">
-            <el-descriptions-item label="名称">{{ profile.nickname }}</el-descriptions-item>
-            <el-descriptions-item label="账号">{{ profile.username }}</el-descriptions-item>
-            <el-descriptions-item label="性别">{{ genderLabel(profile.gender) }}</el-descriptions-item>
-            <el-descriptions-item label="联系电话">{{ profile.phone }}</el-descriptions-item>
-            <el-descriptions-item label="职位">{{ profile.position }}</el-descriptions-item>
-            <el-descriptions-item label="项目权限">{{ profile.projectRole }}</el-descriptions-item>
-            <el-descriptions-item label="个人备注" :span="2">
+            <el-descriptions-item :label="t('profile.nickname')">
+              {{ profile.nickname }}
+            </el-descriptions-item>
+            <el-descriptions-item :label="t('profile.username')">
+              {{ profile.username }}
+            </el-descriptions-item>
+            <el-descriptions-item :label="t('profile.gender')">
+              {{ genderLabel(profile.gender) }}
+            </el-descriptions-item>
+            <el-descriptions-item :label="t('profile.phone')">
+              {{ profile.phone }}
+            </el-descriptions-item>
+            <el-descriptions-item :label="t('profile.position')">
+              {{ profile.position }}
+            </el-descriptions-item>
+            <el-descriptions-item :label="t('profile.projectRole')">
+              {{ profile.projectRole }}
+            </el-descriptions-item>
+            <el-descriptions-item :label="t('profile.remark')" :span="2">
               {{ profile.remark || '—' }}
             </el-descriptions-item>
           </el-descriptions>
@@ -183,10 +204,10 @@ onMounted(() => {
           >
             <el-button size="small" :loading="uploading">
               <el-icon><Plus /></el-icon>
-              更换头像
+              {{ t('profile.changeAvatar') }}
             </el-button>
           </el-upload>
-          <p class="profile-aside-tip">支持 JPG、PNG 格式</p>
+          <p class="profile-aside-tip">{{ t('profile.avatarTip') }}</p>
         </aside>
 
         <main class="profile-main">
@@ -198,34 +219,46 @@ onMounted(() => {
             class="profile-form"
           >
             <div class="form-grid">
-              <el-form-item label="名称" prop="nickname">
-                <el-input v-model="editForm.nickname" placeholder="请输入名称" maxlength="32" />
+              <el-form-item :label="t('profile.nickname')" prop="nickname">
+                <el-input
+                  v-model="editForm.nickname"
+                  :placeholder="t('profile.nicknamePlaceholder')"
+                  maxlength="32"
+                />
               </el-form-item>
-              <el-form-item label="账号">
+              <el-form-item :label="t('profile.username')">
                 <el-input :model-value="profile.username" disabled />
               </el-form-item>
-              <el-form-item label="性别" prop="gender">
+              <el-form-item :label="t('profile.gender')" prop="gender">
                 <el-radio-group v-model="editForm.gender">
-                  <el-radio value="male">男</el-radio>
-                  <el-radio value="female">女</el-radio>
-                  <el-radio value="unknown">未知</el-radio>
+                  <el-radio
+                    v-for="(labelKey, genderValue) in genderLabelKeys"
+                    :key="genderValue"
+                    :value="genderValue"
+                  >
+                    {{ t(labelKey) }}
+                  </el-radio>
                 </el-radio-group>
               </el-form-item>
-              <el-form-item label="联系电话" prop="phone">
-                <el-input v-model="editForm.phone" placeholder="请输入手机号" maxlength="11" />
+              <el-form-item :label="t('profile.phone')" prop="phone">
+                <el-input
+                  v-model="editForm.phone"
+                  :placeholder="t('profile.phonePlaceholder')"
+                  maxlength="11"
+                />
               </el-form-item>
-              <el-form-item label="职位">
+              <el-form-item :label="t('profile.position')">
                 <el-input :model-value="profile.position" disabled />
               </el-form-item>
-              <el-form-item label="项目权限">
+              <el-form-item :label="t('profile.projectRole')">
                 <el-input :model-value="profile.projectRole" disabled />
               </el-form-item>
-              <el-form-item label="个人备注" prop="remark" class="form-item-full">
+              <el-form-item :label="t('profile.remark')" prop="remark" class="form-item-full">
                 <el-input
                   v-model="editForm.remark"
                   type="textarea"
                   :rows="4"
-                  placeholder="请输入个人备注"
+                  :placeholder="t('profile.remarkPlaceholder')"
                   maxlength="200"
                   show-word-limit
                 />
@@ -236,8 +269,10 @@ onMounted(() => {
       </div>
 
       <div v-if="isEditing && profile" class="profile-footer">
-        <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
-        <el-button @click="handleCancel">取消</el-button>
+        <el-button type="primary" :loading="saving" @click="handleSave">
+          {{ t('common.save') }}
+        </el-button>
+        <el-button @click="handleCancel">{{ t('common.cancel') }}</el-button>
       </div>
     </el-card>
   </div>

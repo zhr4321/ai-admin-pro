@@ -1,4 +1,5 @@
 import type { EChartsOption } from 'echarts'
+import type { ComposerTranslation } from 'vue-i18n'
 import type { VisualizationData } from '@/types/visualization'
 
 const CHART_COLORS = ['#36cfc9', '#165dff', '#5cdbd3', '#69b1ff', '#13c2c2', '#597ef7']
@@ -20,7 +21,10 @@ function buildTooltip(): EChartsOption['tooltip'] {
   }
 }
 
-export function buildVisitTrendOption(data: VisualizationData['visitTrend']): EChartsOption {
+export function buildVisitTrendOption(
+  data: VisualizationData['visitTrend'],
+  t: ComposerTranslation,
+): EChartsOption {
   return {
     color: CHART_COLORS,
     tooltip: buildTooltip(),
@@ -38,7 +42,7 @@ export function buildVisitTrendOption(data: VisualizationData['visitTrend']): EC
     },
     series: [
       {
-        name: '访问量',
+        name: t('visualization.seriesVisitCount'),
         type: 'line',
         smooth: true,
         symbol: 'circle',
@@ -64,7 +68,10 @@ export function buildVisitTrendOption(data: VisualizationData['visitTrend']): EC
   }
 }
 
-export function buildChannelCompareOption(data: VisualizationData['channelCompare']): EChartsOption {
+export function buildChannelCompareOption(
+  data: VisualizationData['channelCompare'],
+  t: ComposerTranslation,
+): EChartsOption {
   return {
     color: CHART_COLORS,
     tooltip: {
@@ -86,7 +93,7 @@ export function buildChannelCompareOption(data: VisualizationData['channelCompar
     },
     series: [
       {
-        name: '渠道流量',
+        name: t('visualization.seriesChannelTraffic'),
         type: 'bar',
         barWidth: 28,
         itemStyle: {
@@ -109,7 +116,10 @@ export function buildChannelCompareOption(data: VisualizationData['channelCompar
   }
 }
 
-export function buildSourceRatioOption(data: VisualizationData['sourceRatio']): EChartsOption {
+export function buildSourceRatioOption(
+  data: VisualizationData['sourceRatio'],
+  t: ComposerTranslation,
+): EChartsOption {
   return {
     color: CHART_COLORS,
     tooltip: {
@@ -127,7 +137,7 @@ export function buildSourceRatioOption(data: VisualizationData['sourceRatio']): 
     },
     series: [
       {
-        name: '流量来源',
+        name: t('visualization.seriesTrafficSource'),
         type: 'pie',
         radius: ['42%', '68%'],
         center: ['38%', '52%'],
@@ -143,7 +153,10 @@ export function buildSourceRatioOption(data: VisualizationData['sourceRatio']): 
   }
 }
 
-export function buildRevenueTrendOption(data: VisualizationData['revenueTrend']): EChartsOption {
+export function buildRevenueTrendOption(
+  data: VisualizationData['revenueTrend'],
+  t: ComposerTranslation,
+): EChartsOption {
   return {
     color: CHART_COLORS,
     tooltip: buildTooltip(),
@@ -162,7 +175,7 @@ export function buildRevenueTrendOption(data: VisualizationData['revenueTrend'])
     },
     series: [
       {
-        name: '成交额',
+        name: t('visualization.seriesRevenue'),
         type: 'line',
         smooth: true,
         symbol: 'none',
@@ -186,7 +199,7 @@ export function buildRevenueTrendOption(data: VisualizationData['revenueTrend'])
   }
 }
 
-export function buildTargetRateOption(rate: number): EChartsOption {
+export function buildTargetRateOption(rate: number, t: ComposerTranslation): EChartsOption {
   return {
     series: [
       {
@@ -236,13 +249,16 @@ export function buildTargetRateOption(rate: number): EChartsOption {
           color: '#8cb8e8',
           fontSize: 12,
         },
-        data: [{ value: rate, name: '月度目标完成率' }],
+        data: [{ value: rate, name: t('visualization.seriesMonthlyTarget') }],
       },
     ],
   }
 }
 
-export function buildMetricsRadarOption(data: VisualizationData['metricsRadar']): EChartsOption {
+export function buildMetricsRadarOption(
+  data: VisualizationData['metricsRadar'],
+  t: ComposerTranslation,
+): EChartsOption {
   return {
     color: ['#36cfc9'],
     tooltip: {
@@ -272,7 +288,7 @@ export function buildMetricsRadarOption(data: VisualizationData['metricsRadar'])
         lineStyle: { color: '#36cfc9', width: 2 },
         areaStyle: { color: 'rgba(54, 207, 201, 0.25)' },
         itemStyle: { color: '#36cfc9' },
-        data: [{ value: data.values, name: '核心指标' }],
+        data: [{ value: data.values, name: t('visualization.seriesCoreMetrics') }],
       },
     ],
   }

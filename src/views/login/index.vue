@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { User, Lock } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
+import AppPreferencesBar from '@/components/layout/AppPreferencesBar.vue'
 import { useUserStore } from '@/stores/user'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
@@ -17,10 +20,10 @@ const form = reactive({
   password: '123456',
 })
 
-const rules: FormRules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
-}
+const rules = computed<FormRules>(() => ({
+  username: [{ required: true, message: t('login.usernameRequired'), trigger: 'blur' }],
+  password: [{ required: true, message: t('login.passwordRequired'), trigger: 'blur' }],
+}))
 
 async function handleLogin() {
   if (!formRef.value) return
@@ -45,18 +48,23 @@ async function handleLogin() {
 
 <template>
   <div class="login-page">
+    <AppPreferencesBar fixed />
     <div class="login-card">
-      <h1 class="login-title">AI Admin Pro</h1>
-      <p class="login-subtitle">后台管理系统</p>
+      <h1 class="login-title">{{ t('layout.appName') }}</h1>
+      <p class="login-subtitle">{{ t('login.subtitle') }}</p>
       <el-form ref="formRef" :model="form" :rules="rules" size="large">
         <el-form-item prop="username">
-          <el-input v-model="form.username" placeholder="用户名" :prefix-icon="User" />
+          <el-input
+            v-model="form.username"
+            :placeholder="t('login.username')"
+            :prefix-icon="User"
+          />
         </el-form-item>
         <el-form-item prop="password">
           <el-input
             v-model="form.password"
             type="password"
-            placeholder="密码"
+            :placeholder="t('login.password')"
             show-password
             :prefix-icon="Lock"
             @keyup.enter="handleLogin"
@@ -64,7 +72,7 @@ async function handleLogin() {
         </el-form-item>
         <el-form-item>
           <el-button type="primary" class="login-btn" :loading="loading" @click="handleLogin">
-            登 录
+            {{ t('login.submit') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -86,7 +94,7 @@ async function handleLogin() {
   width: 100%;
   max-width: 400px;
   padding: 40px;
-  background: #fff;
+  background: var(--card-bg);
   border-radius: var(--radius-base);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }

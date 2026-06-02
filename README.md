@@ -123,7 +123,8 @@ npm run build
 - 页面背景：`--bg-primary`
 - 圆角统一：`4px`
 - 响应式：`< 768px` 侧栏自动收起，仪表盘栅格 `:xs="24" :sm="12" :md="6"`
-- Element Plus 中文 locale（分页等组件文案）
+- Element Plus locale（分页等组件文案，随语言切换联动）
+- 顶栏主题切换（浅色 / 深色 / 跟随系统）与语言切换（中文 / English），偏好写入 localStorage
 
 详见 `.cursor/rules/style.mdc`。
 
@@ -186,7 +187,7 @@ npm run build
 - [x] 模块权限 RBAC（动态菜单、`meta.moduleKey` 路由守卫、写操作按钮与 Mock 写接口校验）
 - [x] 图表仪表盘（ECharts 数据可视化）
 - [x] SSE AI 流式对话（全局悬浮助手）
-- [ ] 系统设置进阶（主题切换、国际化）
+- [x] 系统设置进阶（主题切换、国际化）
 
 ## 目录结构
 

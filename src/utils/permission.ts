@@ -23,7 +23,7 @@ export function buildDefaultPermissions(
 ): UserModulePermission[] {
   return APP_MODULES.map((m) => ({
     moduleKey: m.moduleKey,
-    moduleName: m.moduleName,
+    moduleNameKey: m.moduleNameKey,
     level: config[m.moduleKey] ?? 'none',
   }))
 }
@@ -35,4 +35,8 @@ export function mergePermissions(
     permissions.map((p) => [p.moduleKey, normalizeLevelForModule(p.moduleKey, p.level)]),
   )
   return buildDefaultPermissions(Object.fromEntries(levelMap))
+}
+
+export function getModuleNameKey(moduleKey: string): string {
+  return APP_MODULES.find((m) => m.moduleKey === moduleKey)?.moduleNameKey ?? moduleKey
 }

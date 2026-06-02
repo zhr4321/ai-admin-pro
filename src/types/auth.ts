@@ -1,4 +1,4 @@
-import type { UserModulePermission } from '@/types/role'
+export type Gender = 'male' | 'female' | 'unknown'
 
 export interface LoginParams {
   username: string
@@ -9,8 +9,6 @@ export interface LoginResult {
   token: string
   username: string
 }
-
-export type Gender = 'male' | 'female' | 'unknown'
 
 export interface UserInfo {
   id: number
@@ -23,7 +21,7 @@ export interface UserInfo {
   remark?: string
   projectRole: string
   roles: string[]
-  permissions: UserModulePermission[]
+  permissions: import('@/types/role').UserModulePermission[]
 }
 
 export interface UpdateProfileParams {

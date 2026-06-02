@@ -1,5 +1,7 @@
 import { aiChatConfig } from '@/config/ai-chat'
 import { TOKEN_KEY } from '@/api/request'
+import { i18n } from '@/locales'
+import { AI_CHAT_FALLBACK_ERROR_KEY } from '@/types/aiChat'
 import type { StreamChatMessage, StreamChatParams } from '@/types/aiChat'
 
 const baseURL = import.meta.env.VITE_APP_BASE_API || '/api'
@@ -60,7 +62,7 @@ export async function streamChat(
   } catch (error) {
     window.clearTimeout(timeoutId)
     if (handlers.signal?.aborted) return
-    const message = error instanceof Error ? error.message : '网络异常，请稍后重试'
+    const message = error instanceof Error ? error.message : i18n.global.t('aiChat.streamNetworkError')
     handlers.onError(message)
     return
   }
@@ -68,7 +70,7 @@ export async function streamChat(
   window.clearTimeout(timeoutId)
 
   if (!response.ok) {
-    let message = `请求失败（${response.status}）`
+    let message = i18n.global.t('aiChat.streamRequestFailed', { status: response.status })
     try {
       const data = (await response.json()) as { message?: string }
       if (data.message) message = data.message
@@ -81,7 +83,7 @@ export async function streamChat(
 
   const reader = response.body?.getReader()
   if (!reader) {
-    handlers.onError('无法读取流式响应')
+    handlers.onError(i18n.global.t('aiChat.streamReadFailed'))
     return
   }
 
@@ -120,7 +122,7 @@ export async function streamChat(
         }
 
         if (currentEvent === 'error') {
-          let message = 'AI 回答失败，请稍后重试'
+          let message = i18n.global.t(AI_CHAT_FALLBACK_ERROR_KEY)
           try {
             const parsed = JSON.parse(data) as { message?: string }
             if (parsed.message) message = parsed.message
@@ -150,7 +152,7 @@ export async function streamChat(
     if (handlers.signal?.aborted) {
       return
     }
-    const message = error instanceof Error ? error.message : '流式读取失败'
+    const message = error instanceof Error ? error.message : i18n.global.t('aiChat.streamReadError')
     handlers.onError(message)
   } finally {
     reader.releaseLock()

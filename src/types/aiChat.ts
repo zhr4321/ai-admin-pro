@@ -33,13 +33,19 @@ export interface FabPosition {
   y: number
 }
 
-export const AI_CHAT_FALLBACK_ERROR = 'AI 回答失败，请稍后重试'
+import { i18n } from '@/locales'
 
-export const AI_CHAT_DEFAULT_TITLE = '新对话'
+export const AI_CHAT_FALLBACK_ERROR_KEY = 'aiChat.fallbackError'
+
+export const AI_CHAT_DEFAULT_TITLE_KEY = 'aiChat.newConversation'
+
+export function getDefaultConversationTitle(): string {
+  return i18n.global.t(AI_CHAT_DEFAULT_TITLE_KEY)
+}
 
 export function truncateTitle(text: string, maxLen = 20): string {
   const trimmed = text.trim()
-  if (!trimmed) return AI_CHAT_DEFAULT_TITLE
+  if (!trimmed) return getDefaultConversationTitle()
   return trimmed.length > maxLen ? `${trimmed.slice(0, maxLen)}…` : trimmed
 }
 

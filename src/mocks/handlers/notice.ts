@@ -116,7 +116,12 @@ export const noticeHandlers = [
     const body = (await request.json()) as NoticeFormParams
     const idx = notices.findIndex((item) => item.id === id)
     if (idx === -1) {
-      return HttpResponse.json({ code: 404, message: '公告不存在', data: null })
+      return HttpResponse.json({
+        code: 404,
+        messageKey: 'errors.noticeNotFound',
+        message: '公告不存在',
+        data: null,
+      })
     }
     notices[idx] = {
       ...notices[idx],
@@ -143,7 +148,12 @@ export const noticeHandlers = [
     const form = await request.formData()
     const file = form.get('file')
     if (!file || !(file instanceof File)) {
-      return HttpResponse.json({ code: 400, message: '请上传文件', data: null })
+      return HttpResponse.json({
+        code: 400,
+        messageKey: 'errors.uploadFileRequired',
+        message: '请上传文件',
+        data: null,
+      })
     }
 
     const buffer = await file.arrayBuffer()

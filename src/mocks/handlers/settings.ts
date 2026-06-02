@@ -21,14 +21,16 @@ function formatNow() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
 
-function validateSettingsPayload(body: UpdateSettingsParams): string | null {
-  if (!body.siteName?.trim()) return '站点名称不能为空'
-  if (containsForbiddenWord(body.siteName)) return '站点名称包含违禁词，请修改'
-  if (!body.contactEmail?.trim()) return '联系邮箱不能为空'
-  if (!EMAIL_PATTERN.test(body.contactEmail.trim())) return '联系邮箱格式不正确'
-  if (body.maintenanceMode && !body.maintenanceMessage?.trim()) return '维护模式下请填写维护公告'
+function validateSettingsPayload(body: UpdateSettingsParams): { messageKey: string } | null {
+  if (!body.siteName?.trim()) return { messageKey: 'errors.siteNameRequired' }
+  if (containsForbiddenWord(body.siteName)) return { messageKey: 'validation.forbiddenWord' }
+  if (!body.contactEmail?.trim()) return { messageKey: 'errors.contactEmailRequired' }
+  if (!EMAIL_PATTERN.test(body.contactEmail.trim())) return { messageKey: 'errors.contactEmailInvalid' }
+  if (body.maintenanceMode && !body.maintenanceMessage?.trim()) {
+    return { messageKey: 'errors.maintenanceMessageRequired' }
+  }
   if (body.maintenanceMessage && containsForbiddenWord(body.maintenanceMessage)) {
-    return '维护公告包含违禁词，请修改'
+    return { messageKey: 'validation.forbiddenWord' }
   }
   return null
 }
@@ -42,7 +44,7 @@ export const settingsHandlers = [
   http.get('/api/settings', ({ request }) => {
     if (!requireAuth(request)) {
       return HttpResponse.json(
-        { code: 401, message: '未登录', data: null },
+        { code: 401, messageKey: 'errors.unauthorized', message: '未登录', data: null },
         { status: 401 },
       )
     }
@@ -60,7 +62,12 @@ export const settingsHandlers = [
     const body = (await request.json()) as UpdateSettingsParams
     const error = validateSettingsPayload(body)
     if (error) {
-      return HttpResponse.json({ code: 400, message: error, data: null })
+      return HttpResponse.json({
+        code: 400,
+        messageKey: error.messageKey,
+        message: error.messageKey,
+        data: null,
+      })
     }
 
     mockSettings = {
@@ -76,7 +83,7 @@ export const settingsHandlers = [
 
     return HttpResponse.json({
       code: 0,
-      message: '保存成功',
+      message: 'success',
       data: { ...mockSettings },
     })
   }),
@@ -88,7 +95,12 @@ export const settingsHandlers = [
     const formData = await request.formData()
     const file = formData.get('file')
     if (!file || !(file instanceof File)) {
-      return HttpResponse.json({ code: 400, message: '请上传 Logo 文件', data: null })
+      return HttpResponse.json({
+        code: 400,
+        messageKey: 'errors.uploadLogoRequired',
+        message: '请上传 Logo 文件',
+        data: null,
+      })
     }
 
     const arrayBuffer = await file.arrayBuffer()
@@ -101,6 +113,7 @@ export const settingsHandlers = [
 
     return HttpResponse.json({
       code: 0,
+      messageKey: 'common.uploadSuccess',
       message: '上传成功',
       data: { url },
     })

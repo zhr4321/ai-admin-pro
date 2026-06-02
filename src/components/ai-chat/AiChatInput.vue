@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Promotion, VideoPause } from '@element-plus/icons-vue'
 import { useAiChatStore } from '@/stores/aiChat'
 
+const { t } = useI18n()
 const store = useAiChatStore()
 const inputText = ref('')
 
@@ -54,7 +56,7 @@ function onKeydown(event: KeyboardEvent) {
         type="textarea"
         :rows="3"
         :disabled="store.isStreaming"
-        placeholder="输入问题，Enter 发送，Shift+Enter 换行"
+        :placeholder="t('aiChat.inputPlaceholder')"
         @keydown="onKeydown"
       />
 
@@ -63,7 +65,7 @@ function onKeydown(event: KeyboardEvent) {
           v-if="store.isStreaming"
           type="button"
           class="ai-chat-input__btn ai-chat-input__btn--stop"
-          aria-label="停止生成"
+          :aria-label="t('aiChat.stopGenerate')"
           @click="handleStop"
         >
           <el-icon><VideoPause /></el-icon>
@@ -72,7 +74,7 @@ function onKeydown(event: KeyboardEvent) {
           v-else
           type="button"
           class="ai-chat-input__btn"
-          aria-label="发送"
+          :aria-label="t('aiChat.send')"
           :disabled="!inputText.trim()"
           @click="handleSend"
         >

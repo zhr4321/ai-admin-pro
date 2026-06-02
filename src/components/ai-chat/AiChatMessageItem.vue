@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { CopyDocument, Edit, RefreshRight } from '@element-plus/icons-vue'
 import { renderMarkdown } from '@/utils/markdown'
 import { useAiChatStore } from '@/stores/aiChat'
@@ -9,6 +10,7 @@ const props = defineProps<{
   message: ChatMessage
 }>()
 
+const { t } = useI18n()
 const store = useAiChatStore()
 
 const isUser = computed(() => props.message.role === 'user')
@@ -21,7 +23,7 @@ const displayHtml = computed(() => {
 })
 
 const errorText = computed(
-  () => props.message.errorMessage || 'AI 回答失败，请稍后重试',
+  () => props.message.errorMessage || t('aiChat.fallbackError'),
 )
 
 const showActions = computed(() => !store.isStreaming || props.message.status !== 'streaming')
@@ -45,23 +47,23 @@ const showActions = computed(() => !store.isStreaming || props.message.status !=
 
     <div v-if="showActions" class="ai-chat-message__actions">
       <template v-if="isUser">
-        <el-tooltip content="复制" placement="top" popper-class="ai-chat-popper">
+        <el-tooltip :content="t('aiChat.copy')" placement="top" popper-class="ai-chat-popper">
           <button
             type="button"
             class="ai-chat-message__action"
             :disabled="store.isStreaming"
-            aria-label="复制"
+            :aria-label="t('aiChat.copy')"
             @click="store.copyMessage(message.content)"
           >
             <el-icon :size="16"><CopyDocument /></el-icon>
           </button>
         </el-tooltip>
-        <el-tooltip content="修改" placement="top" popper-class="ai-chat-popper">
+        <el-tooltip :content="t('aiChat.edit')" placement="top" popper-class="ai-chat-popper">
           <button
             type="button"
             class="ai-chat-message__action"
             :disabled="store.isStreaming"
-            aria-label="修改"
+            :aria-label="t('aiChat.edit')"
             @click="store.editMessage(message.id)"
           >
             <el-icon :size="16"><Edit /></el-icon>
@@ -69,23 +71,23 @@ const showActions = computed(() => !store.isStreaming || props.message.status !=
         </el-tooltip>
       </template>
       <template v-else>
-        <el-tooltip content="重新生成" placement="top" popper-class="ai-chat-popper">
+        <el-tooltip :content="t('aiChat.regenerate')" placement="top" popper-class="ai-chat-popper">
           <button
             type="button"
             class="ai-chat-message__action"
             :disabled="store.isStreaming"
-            aria-label="重新生成"
+            :aria-label="t('aiChat.regenerate')"
             @click="store.regenerateMessage(message.id)"
           >
             <el-icon :size="16"><RefreshRight /></el-icon>
           </button>
         </el-tooltip>
-        <el-tooltip content="复制" placement="top" popper-class="ai-chat-popper">
+        <el-tooltip :content="t('aiChat.copy')" placement="top" popper-class="ai-chat-popper">
           <button
             type="button"
             class="ai-chat-message__action"
             :disabled="store.isStreaming || isError"
-            aria-label="复制"
+            :aria-label="t('aiChat.copy')"
             @click="store.copyMessage(message.content)"
           >
             <el-icon :size="16"><CopyDocument /></el-icon>

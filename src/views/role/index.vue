@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import {
   getUserPermissionConfig,
@@ -20,6 +21,7 @@ interface HighlightSegment {
   match: boolean
 }
 
+const { t } = useI18n()
 const searchInput = ref('')
 const suggestKeyword = ref('')
 const selectedUser = ref<UserAccountItem | null>(null)
@@ -37,7 +39,7 @@ const filteredPermissions = computed(() => {
   if (!kw) return allPermissions.value
   return allPermissions.value.filter(
     (p) =>
-      p.permissionName.toLowerCase().includes(kw) ||
+      t(p.permissionNameKey).toLowerCase().includes(kw) ||
       p.moduleKey.toLowerCase().includes(kw),
   )
 })
@@ -135,28 +137,27 @@ async function handleSave() {
       selectedUser.value.id,
       toStoredPermissions(allPermissions.value),
     )
-    ElMessage.success('权限保存成功')
+    ElMessage.success(t('role.saveSuccess'))
   } catch {
     // 错误由拦截器处理
   } finally {
     saving.value = false
   }
 }
-
 </script>
 
 <template>
   <div class="user-perm-page">
     <el-card class="user-card" shadow="never">
       <template #header>
-        <span class="card-title">用户搜索</span>
+        <span class="card-title">{{ t('role.userSearch') }}</span>
       </template>
       <el-autocomplete
         v-model="searchInput"
         :debounce="300"
         :fetch-suggestions="fetchSuggestions"
         clearable
-        placeholder="输入账号或用户姓名搜索"
+        :placeholder="t('role.searchPlaceholder')"
         style="width: 360px"
         value-key="id"
         @input="handleSearchInput"
@@ -185,9 +186,15 @@ async function handleSave() {
         size="small"
         class="user-info"
       >
-        <el-descriptions-item label="账号">{{ selectedUser.username }}</el-descriptions-item>
-        <el-descriptions-item label="用户姓名">{{ selectedUser.realName }}</el-descriptions-item>
-        <el-descriptions-item label="所属角色">{{ selectedUser.roleName }}</el-descriptions-item>
+        <el-descriptions-item :label="t('role.account')">
+          {{ selectedUser.username }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('role.realName')">
+          {{ selectedUser.realName }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('role.roleName')">
+          {{ selectedUser.roleName }}
+        </el-descriptions-item>
       </el-descriptions>
     </el-card>
 
@@ -196,14 +203,19 @@ async function handleSave() {
         <div class="perm-header">
           <span class="card-title">
             <template v-if="selectedUser">
-              {{ selectedUser.realName }}（{{ selectedUser.username }}）的权限配置
+              {{
+                t('role.permissionConfigFor', {
+                  realName: selectedUser.realName,
+                  username: selectedUser.username,
+                })
+              }}
             </template>
-            <template v-else>用户权限配置</template>
+            <template v-else>{{ t('role.permissionConfig') }}</template>
           </span>
           <el-input
             v-if="selectedUser"
             v-model="moduleKeyword"
-            placeholder="搜索功能模块"
+            :placeholder="t('role.searchModule')"
             clearable
             style="width: 200px"
             size="small"
@@ -211,12 +223,12 @@ async function handleSave() {
         </div>
       </template>
 
-      <el-empty v-if="!selectedUser" description="请先搜索并选择用户" />
+      <el-empty v-if="!selectedUser" :description="t('role.selectUserFirst')" />
 
       <template v-else>
         <el-alert
           v-if="isLocked"
-          title="超级管理员拥有全部模块可修改权限，不可变更"
+          :title="t('role.superAdminLocked')"
           type="info"
           :closable="false"
           show-icon
@@ -224,7 +236,7 @@ async function handleSave() {
         />
         <el-alert
           v-else-if="!canEdit"
-          title="当前账号无「用户权限-可修改」权限，仅可查看"
+          :title="t('role.viewOnly')"
           type="info"
           :closable="false"
           show-icon
@@ -236,7 +248,7 @@ async function handleSave() {
             :key="item.moduleKey"
             class="perm-row"
           >
-            <span class="perm-module-name">{{ item.permissionName }}</span>
+            <span class="perm-module-name">{{ t(item.permissionNameKey) }}</span>
             <el-select
               :model-value="item.level"
               :disabled="!canEdit || isLocked"
@@ -247,14 +259,14 @@ async function handleSave() {
               <el-option
                 v-for="opt in item.options"
                 :key="opt.value"
-                :label="opt.label"
+                :label="t(opt.labelKey)"
                 :value="opt.value"
               />
             </el-select>
           </div>
           <el-empty
             v-if="!permLoading && filteredPermissions.length === 0"
-            description="无匹配的功能模块"
+            :description="t('role.noMatchingModule')"
           />
         </div>
         <div class="perm-footer">
@@ -264,7 +276,7 @@ async function handleSave() {
             :disabled="!canEdit || isLocked"
             @click="handleSave"
           >
-            保存权限
+            {{ t('role.savePermission') }}
           </el-button>
         </div>
       </template>

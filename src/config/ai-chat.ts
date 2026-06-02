@@ -1,3 +1,5 @@
+import { i18n } from '@/locales'
+
 export type AiChatProvider = 'deepseek' | 'openai' | 'custom'
 
 export interface AiChatConfig {
@@ -36,7 +38,9 @@ export const aiChatConfig: AiChatConfig = {
   apiKeyEnv: 'VITE_AI_API_KEY',
   model: preset.model,
   streamPath: '/api/ai/chat/stream',
-  defaultSystemPrompt: '你是 AI Admin Pro 的智能助手，请用简洁清晰的中文回答用户问题。',
+  get defaultSystemPrompt() {
+    return i18n.global.t('aiChat.systemPrompt')
+  },
   requestTimeoutMs: 60_000,
 }
 

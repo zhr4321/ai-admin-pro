@@ -8,14 +8,14 @@ type GuardResult =
 
 function unauthorizedResponse() {
   return HttpResponse.json(
-    { code: 401, message: '未登录', data: null },
+    { code: 401, messageKey: 'errors.unauthorized', message: '未登录', data: null },
     { status: 401 },
   )
 }
 
 function forbiddenResponse() {
   return HttpResponse.json(
-    { code: 403, message: '无操作权限', data: null },
+    { code: 403, messageKey: 'errors.forbidden', message: '无操作权限', data: null },
     { status: 403 },
   )
 }

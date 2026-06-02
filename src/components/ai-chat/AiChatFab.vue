@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ChatDotRound } from '@element-plus/icons-vue'
 import { useAiChatStore } from '@/stores/aiChat'
 import AiChatDrawer from './AiChatDrawer.vue'
 
+const { t } = useI18n()
 const FAB_SIZE = 56
 const DRAG_THRESHOLD = 5
 const DEFAULT_MARGIN = 24
@@ -99,7 +101,7 @@ onUnmounted(() => {
     ref="fabRef"
     type="button"
     class="ai-chat-fab"
-    aria-label="打开 AI 助手"
+    :aria-label="t('aiChat.openFab')"
     :style="fabStyle"
     @pointerdown="onPointerDown"
     @pointermove="onPointerMove"

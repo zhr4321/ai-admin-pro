@@ -1,4 +1,5 @@
 import type { FormItemRule } from 'element-plus'
+import type { ComposerTranslation } from 'vue-i18n'
 
 export const PHONE_PATTERN = /^1[3-9]\d{9}$/
 
@@ -10,11 +11,14 @@ export function containsForbiddenWord(value: string): boolean {
   return FORBIDDEN_WORDS.some((word) => text.includes(word.toLowerCase()))
 }
 
-export function createForbiddenWordRule(fieldLabel: string): FormItemRule {
+export function createForbiddenWordRule(
+  t: ComposerTranslation,
+  fieldLabelKey: string,
+): FormItemRule {
   return {
     validator: (_rule, value, callback) => {
       if (value && containsForbiddenWord(String(value))) {
-        callback(new Error(`${fieldLabel}包含违禁词，请修改`))
+        callback(new Error(t('validation.forbiddenWord', { field: t(fieldLabelKey) })))
         return
       }
       callback()
@@ -23,8 +27,10 @@ export function createForbiddenWordRule(fieldLabel: string): FormItemRule {
   }
 }
 
-export const GENDER_LABELS: Record<string, string> = {
-  male: '男',
-  female: '女',
-  unknown: '未知',
+export function getGenderLabelKeys(): Record<string, string> {
+  return {
+    male: 'profile.genderMale',
+    female: 'profile.genderFemale',
+    unknown: 'profile.genderUnknown',
+  }
 }

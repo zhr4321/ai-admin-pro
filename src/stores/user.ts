@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { i18n } from '@/locales'
 import { login as loginApi, getUserInfo as getUserInfoApi } from '@/api/auth'
 import { TOKEN_KEY } from '@/api/request'
 import type { LoginParams, UserInfo } from '@/types/auth'
@@ -12,7 +13,10 @@ export const useUserStore = defineStore('user', () => {
 
   const isLoggedIn = computed(() => !!token.value)
   const displayName = computed(
-    () => userInfo.value?.nickname || userInfo.value?.username || '用户',
+    () =>
+      userInfo.value?.nickname ||
+      userInfo.value?.username ||
+      i18n.global.t('common.defaultUser'),
   )
   const avatarText = computed(
     () => displayName.value.charAt(0).toUpperCase(),

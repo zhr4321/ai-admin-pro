@@ -2,11 +2,13 @@ import { defineStore, acceptHMRUpdate } from 'pinia'
 import { computed, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAiChatStream } from '@/composables/useAiChatStream'
+import { i18n } from '@/locales'
 import {
-  AI_CHAT_DEFAULT_TITLE,
-  AI_CHAT_FALLBACK_ERROR,
+  AI_CHAT_DEFAULT_TITLE_KEY,
+  AI_CHAT_FALLBACK_ERROR_KEY,
   createConversationId,
   createMessageId,
+  getDefaultConversationTitle,
   truncateTitle,
   type ChatMessage,
   type FabPosition,
@@ -86,7 +88,7 @@ export const useAiChatStore = defineStore('aiChat', () => {
     const now = Date.now()
     const conv: StoredConversation = {
       id: createConversationId(),
-      title: AI_CHAT_DEFAULT_TITLE,
+      title: getDefaultConversationTitle(),
       createdAt: now,
       updatedAt: now,
       messages: [],
@@ -100,13 +102,17 @@ export const useAiChatStore = defineStore('aiChat', () => {
 
   async function deleteConversation(id: string) {
     try {
-      await ElMessageBox.confirm('确定删除该对话吗？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-        customClass: 'ai-chat-message-box',
-        modalClass: 'ai-chat-modal',
-      })
+      await ElMessageBox.confirm(
+        i18n.global.t('aiChat.deleteConfirm'),
+        i18n.global.t('common.tip'),
+        {
+          confirmButtonText: i18n.global.t('common.confirm'),
+          cancelButtonText: i18n.global.t('common.cancel'),
+          type: 'warning',
+          customClass: 'ai-chat-message-box',
+          modalClass: 'ai-chat-modal',
+        },
+      )
     } catch {
       return
     }
@@ -130,7 +136,7 @@ export const useAiChatStore = defineStore('aiChat', () => {
 
     const title = rawTitle.trim()
     if (!title) {
-      ElMessage.warning('对话名称不能为空')
+      ElMessage.warning(i18n.global.t('aiChat.titleRequired'))
       return
     }
 
@@ -187,7 +193,7 @@ export const useAiChatStore = defineStore('aiChat', () => {
     if (result.status === 'error') {
       assistantMsg.content = ''
       assistantMsg.status = 'error'
-      assistantMsg.errorMessage = result.message || AI_CHAT_FALLBACK_ERROR
+      assistantMsg.errorMessage = result.message || i18n.global.t(AI_CHAT_FALLBACK_ERROR_KEY)
       persist()
       return
     }
@@ -227,7 +233,8 @@ export const useAiChatStore = defineStore('aiChat', () => {
 
     conv.messages.push(userMsg, assistantMsg)
 
-    if (conv.title === AI_CHAT_DEFAULT_TITLE) {
+    const defaultTitle = i18n.global.t(AI_CHAT_DEFAULT_TITLE_KEY)
+    if (conv.title === defaultTitle) {
       conv.title = truncateTitle(text)
     }
     conv.updatedAt = Date.now()
@@ -303,9 +310,9 @@ export const useAiChatStore = defineStore('aiChat', () => {
   async function copyMessage(content: string) {
     try {
       await navigator.clipboard.writeText(content)
-      ElMessage.success('已复制')
+      ElMessage.success(i18n.global.t('common.copied'))
     } catch {
-      ElMessage.error('复制失败')
+      ElMessage.error(i18n.global.t('common.copyFailed'))
     }
   }
 

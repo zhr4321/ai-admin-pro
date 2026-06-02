@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx'
+import { i18n } from '@/locales'
 import { downloadBlob } from './download'
 
 export interface ExcelColumn<T extends Record<string, unknown>> {
@@ -55,7 +56,7 @@ export function parseXlsxFile<T extends Record<string, unknown>>(file: File): Pr
       try {
         const data = e.target?.result
         if (!data) {
-          reject(new Error('文件读取失败'))
+          reject(new Error(i18n.global.t('common.fileReadFailed')))
           return
         }
         const workbook = XLSX.read(data, { type: 'array' })
@@ -71,7 +72,7 @@ export function parseXlsxFile<T extends Record<string, unknown>>(file: File): Pr
         reject(err)
       }
     }
-    reader.onerror = () => reject(new Error('文件读取失败'))
+    reader.onerror = () => reject(new Error(i18n.global.t('common.fileReadFailed')))
     reader.readAsArrayBuffer(file)
   })
 }

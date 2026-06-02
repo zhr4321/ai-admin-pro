@@ -1,15 +1,15 @@
 export type PermissionLevel = 'none' | 'view' | 'edit'
 
 export interface PermissionLevelOption {
-  label: string
+  labelKey: string
   value: PermissionLevel
 }
 
 /** @deprecated 请使用 permission-config 接口返回的 options */
 export const PERMISSION_LEVEL_OPTIONS: PermissionLevelOption[] = [
-  { label: '无', value: 'none' },
-  { label: '可查看', value: 'view' },
-  { label: '可修改', value: 'edit' },
+  { labelKey: 'menu.permission.none', value: 'none' },
+  { labelKey: 'menu.permission.view', value: 'view' },
+  { labelKey: 'menu.permission.edit', value: 'edit' },
 ]
 
 export interface UserAccountItem {
@@ -36,14 +36,14 @@ export interface UserPermissionConfigResult {
 
 export interface UserModulePermissionConfigItem {
   moduleKey: string
-  permissionName: string
+  permissionNameKey: string
   level: PermissionLevel
   options: PermissionLevelOption[]
 }
 
 export interface UserModulePermission {
   moduleKey: string
-  moduleName: string
+  moduleNameKey: string
   level: PermissionLevel
 }
 
@@ -61,7 +61,7 @@ export interface UserListResult {
 /** @deprecated 权限已并入 GET /auth/userinfo 的 permissions 字段，仅 mock 兼容保留 */
 export interface ModulePermission {
   moduleKey: string
-  moduleName: string
+  moduleNameKey: string
   view: boolean
   edit: boolean
 }

@@ -169,7 +169,12 @@ export const campaignHandlers = [
     const body = (await request.json()) as CampaignFormParams
     const idx = campaigns.findIndex((item) => item.id === id)
     if (idx === -1) {
-      return HttpResponse.json({ code: 404, message: '活动不存在', data: null })
+      return HttpResponse.json({
+        code: 404,
+        messageKey: 'errors.campaignNotFound',
+        message: '活动不存在',
+        data: null,
+      })
     }
     campaigns[idx] = { ...campaigns[idx], ...body }
     return HttpResponse.json({ code: 0, message: 'success', data: campaigns[idx] })
@@ -191,7 +196,12 @@ export const campaignHandlers = [
     const form = await request.formData()
     const file = form.get('file')
     if (!file || !(file instanceof File)) {
-      return HttpResponse.json({ code: 400, message: '请上传文件', data: null })
+      return HttpResponse.json({
+        code: 400,
+        messageKey: 'errors.uploadFileRequired',
+        message: '请上传文件',
+        data: null,
+      })
     }
 
     const buffer = await file.arrayBuffer()

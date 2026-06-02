@@ -1,5 +1,6 @@
 import type { Router } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { i18n } from '@/locales'
 import { TOKEN_KEY } from '@/api/request'
 import { useUserStore } from '@/stores/user'
 import { preloadFormRouteChunks } from '@/utils/preloadRoutes'
@@ -38,7 +39,7 @@ export function setupRouterGuard(router: Router) {
 
     const moduleKey = to.meta.moduleKey
     if (moduleKey && !userStore.hasModuleView(moduleKey)) {
-      ElMessage.warning('无权限访问该页面')
+      ElMessage.warning(i18n.global.t('errors.noPermission'))
       if (to.path === '/dashboard') {
         return next('/login')
       }

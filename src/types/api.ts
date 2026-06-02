@@ -1,6 +1,8 @@
 export interface ApiResponse<T = unknown> {
   code: number
   message: string
+  messageKey?: string
+  messageParams?: Record<string, string>
   data: T
 }
 

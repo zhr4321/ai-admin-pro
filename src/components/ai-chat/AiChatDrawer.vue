@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAiChatStore } from '@/stores/aiChat'
 import AiChatSidebar from './AiChatSidebar.vue'
 import AiChatMessages from './AiChatMessages.vue'
 import AiChatInput from './AiChatInput.vue'
 import { Close } from '@element-plus/icons-vue'
 
+const { t } = useI18n()
 const store = useAiChatStore()
 const isEntered = ref(false)
 const isClosing = ref(false)
@@ -63,8 +65,8 @@ onUnmounted(() => {
 
       <section class="ai-chat-main">
         <header class="ai-chat-header">
-          <span class="ai-chat-header__title">AI 助手</span>
-          <button type="button" class="ai-chat-header__close" aria-label="关闭" @click="close">
+          <span class="ai-chat-header__title">{{ t('aiChat.title') }}</span>
+          <button type="button" class="ai-chat-header__close" :aria-label="t('aiChat.close')" @click="close">
             <el-icon :size="20"><Close /></el-icon>
           </button>
         </header>

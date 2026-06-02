@@ -1,4 +1,5 @@
-:root {
+:root,
+:root[data-theme='light'] {
   /* 主色与功能色 */
   --primary-color: #165dff;
   --success: #00b42a;
@@ -11,11 +12,14 @@
   --text-light: #86909c;
   --border-color: #e5e6eb;
 
-  /* 侧栏（后台布局） */
-  --sidebar-bg: #1d2129;
-  --sidebar-bg-dark: #0c0e14;
-  --sidebar-text: #c9cdd4;
+  /* 侧栏与顶栏（浅色主题） */
+  --sidebar-bg: #ffffff;
+  --sidebar-bg-dark: #f7f8fa;
+  --sidebar-text: #4e5969;
   --sidebar-active: var(--primary-color);
+  --sidebar-logo-text: #1d2129;
+  --header-bg: #ffffff;
+  --card-bg: #ffffff;
 
   /* 排版 */
   --font-size-title: 18px;
@@ -34,6 +38,8 @@
   --el-color-danger: #f53f3f;
   --el-border-radius-base: 4px;
   --el-border-radius-small: 4px;
+  --el-bg-color: #ffffff;
+  --el-bg-color-page: #f2f3f5;
 
   /* 数据可视化 BI 大屏 */
   --viz-bg: #0a1a2e;
@@ -42,4 +48,27 @@
   --viz-text: #e8f3ff;
   --viz-text-muted: #8cb8e8;
   --viz-accent: #36cfc9;
+}
+
+:root.dark,
+:root[data-theme='dark'] {
+  --bg-primary: #141414;
+  --text-dark: #e5eaf3;
+  --text-light: #a3a6ad;
+  --border-color: #363637;
+
+  --sidebar-bg: #0c0e14;
+  --sidebar-bg-dark: #000000;
+  --sidebar-text: #c9cdd4;
+  --sidebar-logo-text: #e5eaf3;
+  --header-bg: #1d1e1f;
+  --card-bg: #1d1e1f;
+
+  --el-bg-color: #1d1e1f;
+  --el-bg-color-page: #141414;
+  --el-text-color-primary: #e5eaf3;
+  --el-text-color-regular: #cfd3dc;
+  --el-border-color: #363637;
+  --el-border-color-light: #414243;
+  --el-fill-color-blank: #1d1e1f;
 }

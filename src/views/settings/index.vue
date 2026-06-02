@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage, type FormInstance, type FormRules, type UploadRequestOptions } from 'element-plus'
 import { getSettings, updateSettings, uploadSettingsLogo } from '@/api/settings'
@@ -9,6 +10,7 @@ import { createForbiddenWordRule } from '@/utils/validators'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+const { t } = useI18n()
 const { canEdit } = useModulePermission('system')
 
 const loading = ref(false)
@@ -27,25 +29,25 @@ const editForm = reactive<UpdateSettingsParams>({
   maintenanceMessage: '',
 })
 
-const rules: FormRules = {
+const rules = computed<FormRules>(() => ({
   siteName: [
-    { required: true, message: '请输入站点名称', trigger: 'blur' },
-    createForbiddenWordRule('站点名称'),
+    { required: true, message: t('settings.siteNameRequired'), trigger: 'blur' },
+    createForbiddenWordRule(t, 'validation.fieldSiteName'),
   ],
   contactEmail: [
-    { required: true, message: '请输入联系邮箱', trigger: 'blur' },
+    { required: true, message: t('settings.contactEmailRequired'), trigger: 'blur' },
     {
       pattern: EMAIL_PATTERN,
-      message: '联系邮箱格式不正确',
+      message: t('settings.contactEmailInvalid'),
       trigger: 'blur',
     },
   ],
   maintenanceMessage: [
-    createForbiddenWordRule('维护公告'),
+    createForbiddenWordRule(t, 'validation.fieldMaintenanceMessage'),
     {
       validator: (_rule, value, callback) => {
         if (editForm.maintenanceMode && !String(value || '').trim()) {
-          callback(new Error('维护模式下请填写维护公告'))
+          callback(new Error(t('settings.maintenanceMessageRequired')))
           return
         }
         callback()
@@ -53,7 +55,7 @@ const rules: FormRules = {
       trigger: 'blur',
     },
   ],
-}
+}))
 
 watch(
   () => editForm.maintenanceMode,
@@ -103,9 +105,9 @@ async function handleLogoUpload(options: UploadRequestOptions) {
     const { url } = await uploadSettingsLogo(options.file as File)
     editForm.logoUrl = url
     options.onSuccess?.({ url })
-    ElMessage.success('Logo 上传成功')
+    ElMessage.success(t('settings.logoUploadSuccess'))
   } catch {
-    options.onError?.(new Error('上传失败') as never)
+    options.onError?.(new Error(t('common.uploadFailed')) as never)
   } finally {
     uploading.value = false
   }
@@ -129,7 +131,7 @@ async function handleSave() {
       })
       await loadSettings()
       isEditing.value = false
-      ElMessage.success('系统设置保存成功')
+      ElMessage.success(t('settings.saveSuccess'))
     } catch {
       // 错误由拦截器处理
     } finally {
@@ -148,14 +150,18 @@ onMounted(() => {
     <el-card shadow="never" class="form-card">
       <template #header>
         <div class="form-card-header">
-          <span class="card-title">系统设置</span>
+          <span class="card-title">{{ t('settings.title') }}</span>
           <el-button v-if="canEdit && !isEditing && settings" type="primary" @click="handleEdit">
-            修改
+            {{ t('common.edit') }}
           </el-button>
         </div>
       </template>
 
-      <el-empty v-if="!loading && !settings" description="无法加载系统设置" class="form-empty" />
+      <el-empty
+        v-if="!loading && !settings"
+        :description="t('settings.loadFailed')"
+        class="form-empty"
+      />
 
       <!-- 查看模式 -->
       <div v-else-if="!isEditing && settings" class="form-body">
@@ -166,22 +172,36 @@ onMounted(() => {
             fit="contain"
             class="settings-logo"
           />
-          <div v-else class="settings-logo-placeholder">暂无 Logo</div>
+          <div v-else class="settings-logo-placeholder">{{ t('settings.noLogo') }}</div>
           <p class="form-aside-tip">{{ settings.siteName }}</p>
         </aside>
 
         <main class="form-main">
           <el-descriptions :column="2" border class="form-desc">
-            <el-descriptions-item label="站点名称">{{ settings.siteName }}</el-descriptions-item>
-            <el-descriptions-item label="联系邮箱">{{ settings.contactEmail }}</el-descriptions-item>
-            <el-descriptions-item label="备案号">{{ settings.icpNumber || '—' }}</el-descriptions-item>
-            <el-descriptions-item label="维护模式">
-              {{ settings.maintenanceMode ? '已开启' : '已关闭' }}
+            <el-descriptions-item :label="t('settings.siteName')">
+              {{ settings.siteName }}
             </el-descriptions-item>
-            <el-descriptions-item v-if="settings.maintenanceMode" label="维护公告" :span="2">
+            <el-descriptions-item :label="t('settings.contactEmail')">
+              {{ settings.contactEmail }}
+            </el-descriptions-item>
+            <el-descriptions-item :label="t('settings.icpNumber')">
+              {{ settings.icpNumber || '—' }}
+            </el-descriptions-item>
+            <el-descriptions-item :label="t('settings.maintenanceMode')">
+              {{
+                settings.maintenanceMode
+                  ? t('settings.maintenanceModeOn')
+                  : t('settings.maintenanceModeOff')
+              }}
+            </el-descriptions-item>
+            <el-descriptions-item
+              v-if="settings.maintenanceMode"
+              :label="t('settings.maintenanceMessage')"
+              :span="2"
+            >
               {{ settings.maintenanceMessage || '—' }}
             </el-descriptions-item>
-            <el-descriptions-item label="最后更新时间" :span="2">
+            <el-descriptions-item :label="t('settings.lastUpdatedAt')" :span="2">
               {{ settings.updatedAt }}
             </el-descriptions-item>
           </el-descriptions>
@@ -197,7 +217,7 @@ onMounted(() => {
             fit="contain"
             class="settings-logo"
           />
-          <div v-else class="settings-logo-placeholder">暂无 Logo</div>
+          <div v-else class="settings-logo-placeholder">{{ t('settings.noLogo') }}</div>
           <el-upload
             v-if="canEdit"
             :show-file-list="false"
@@ -207,10 +227,10 @@ onMounted(() => {
           >
             <el-button size="small" :loading="uploading">
               <el-icon><Plus /></el-icon>
-              更换 Logo
+              {{ t('settings.changeLogo') }}
             </el-button>
           </el-upload>
-          <p class="form-aside-tip">支持 JPG、PNG 格式</p>
+          <p class="form-aside-tip">{{ t('settings.logoTip') }}</p>
         </aside>
 
         <main class="form-main">
@@ -222,21 +242,33 @@ onMounted(() => {
             class="form-main-form"
           >
             <div class="form-grid">
-              <el-form-item label="站点名称" prop="siteName">
-                <el-input v-model="editForm.siteName" placeholder="请输入站点名称" maxlength="64" />
+              <el-form-item :label="t('settings.siteName')" prop="siteName">
+                <el-input
+                  v-model="editForm.siteName"
+                  :placeholder="t('settings.siteNamePlaceholder')"
+                  maxlength="64"
+                />
               </el-form-item>
-              <el-form-item label="联系邮箱" prop="contactEmail">
-                <el-input v-model="editForm.contactEmail" placeholder="请输入联系邮箱" maxlength="128" />
+              <el-form-item :label="t('settings.contactEmail')" prop="contactEmail">
+                <el-input
+                  v-model="editForm.contactEmail"
+                  :placeholder="t('settings.contactEmailPlaceholder')"
+                  maxlength="128"
+                />
               </el-form-item>
-              <el-form-item label="备案号">
-                <el-input v-model="editForm.icpNumber" placeholder="请输入备案号" maxlength="64" />
+              <el-form-item :label="t('settings.icpNumber')">
+                <el-input
+                  v-model="editForm.icpNumber"
+                  :placeholder="t('settings.icpPlaceholder')"
+                  maxlength="64"
+                />
               </el-form-item>
-              <el-form-item label="维护模式">
+              <el-form-item :label="t('settings.maintenanceMode')">
                 <el-switch v-model="editForm.maintenanceMode" />
               </el-form-item>
               <el-form-item
                 v-if="editForm.maintenanceMode"
-                label="维护公告"
+                :label="t('settings.maintenanceMessage')"
                 prop="maintenanceMessage"
                 class="form-item-full"
               >
@@ -244,12 +276,12 @@ onMounted(() => {
                   v-model="editForm.maintenanceMessage"
                   type="textarea"
                   :rows="4"
-                  placeholder="请输入维护公告"
+                  :placeholder="t('settings.maintenanceMessagePlaceholder')"
                   maxlength="500"
                   show-word-limit
                 />
               </el-form-item>
-              <el-form-item label="最后更新时间">
+              <el-form-item :label="t('settings.lastUpdatedAt')">
                 <el-input :model-value="settings.updatedAt" disabled />
               </el-form-item>
             </div>
@@ -258,8 +290,10 @@ onMounted(() => {
       </div>
 
       <div v-if="canEdit && isEditing && settings" class="form-footer">
-        <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
-        <el-button @click="handleCancel">取消</el-button>
+        <el-button type="primary" :loading="saving" @click="handleSave">
+          {{ t('common.save') }}
+        </el-button>
+        <el-button @click="handleCancel">{{ t('common.cancel') }}</el-button>
       </div>
     </el-card>
   </div>

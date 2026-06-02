@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { Search, RefreshRight } from '@element-plus/icons-vue'
 import { getVisualizationData } from '@/api/visualization'
@@ -20,6 +21,8 @@ import {
   buildTargetRateOption,
   buildVisitTrendOption,
 } from './chartOptions'
+
+const { t } = useI18n()
 
 const emptyData: VisualizationData = {
   visitTrend: { dates: [], values: [] },
@@ -42,12 +45,12 @@ const revenueTrendRef = ref<HTMLElement | null>(null)
 const targetRateRef = ref<HTMLElement | null>(null)
 const metricsRadarRef = ref<HTMLElement | null>(null)
 
-const visitTrendOption = computed(() => buildVisitTrendOption(chartData.value.visitTrend))
-const channelCompareOption = computed(() => buildChannelCompareOption(chartData.value.channelCompare))
-const sourceRatioOption = computed(() => buildSourceRatioOption(chartData.value.sourceRatio))
-const revenueTrendOption = computed(() => buildRevenueTrendOption(chartData.value.revenueTrend))
-const targetRateOption = computed(() => buildTargetRateOption(chartData.value.targetRate))
-const metricsRadarOption = computed(() => buildMetricsRadarOption(chartData.value.metricsRadar))
+const visitTrendOption = computed(() => buildVisitTrendOption(chartData.value.visitTrend, t))
+const channelCompareOption = computed(() => buildChannelCompareOption(chartData.value.channelCompare, t))
+const sourceRatioOption = computed(() => buildSourceRatioOption(chartData.value.sourceRatio, t))
+const revenueTrendOption = computed(() => buildRevenueTrendOption(chartData.value.revenueTrend, t))
+const targetRateOption = computed(() => buildTargetRateOption(chartData.value.targetRate, t))
+const metricsRadarOption = computed(() => buildMetricsRadarOption(chartData.value.metricsRadar, t))
 
 const visitTrendChart = useEchart(visitTrendRef, visitTrendOption)
 const channelCompareChart = useEchart(channelCompareRef, channelCompareOption)
@@ -110,22 +113,22 @@ onMounted(() => {
   <div class="viz-page">
     <div class="viz-page__header">
       <div>
-        <h2 class="viz-page__title">数据可视化中心</h2>
+        <h2 class="viz-page__title">{{ t('visualization.pageTitle') }}</h2>
         <p class="viz-page__subtitle">
-          当前展示区间：{{ activeRange[0] }} 至 {{ activeRange[1] }}
+          {{ t('visualization.activeRange', { start: activeRange[0], end: activeRange[1] }) }}
         </p>
       </div>
     </div>
 
     <div class="viz-toolbar">
       <el-form inline class="viz-toolbar__form" @submit.prevent="handleSearch">
-        <el-form-item label="时间区间">
+        <el-form-item :label="t('visualization.timeRange')">
           <el-date-picker
             v-model="dateRange"
             type="daterange"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
+            :range-separator="t('common.dateRangeSeparator')"
+            :start-placeholder="t('common.startDate')"
+            :end-placeholder="t('common.endDate')"
             value-format="YYYY-MM-DD"
             :disabled-date="disableDate"
             style="width: 260px"
@@ -133,9 +136,9 @@ onMounted(() => {
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" :loading="loading" @click="handleSearch">
-            查询
+            {{ t('common.search') }}
           </el-button>
-          <el-button :icon="RefreshRight" @click="handleReset">重置</el-button>
+          <el-button :icon="RefreshRight" @click="handleReset">{{ t('common.reset') }}</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -143,17 +146,17 @@ onMounted(() => {
     <div class="viz-grid">
       <el-row :gutter="16" class="viz-row">
         <el-col :xs="24" :md="8" class="viz-col">
-          <ChartPanel title="访问趋势" :loading="loading">
+          <ChartPanel :title="t('visualization.chartVisitTrend')" :loading="loading">
             <div ref="visitTrendRef" class="viz-chart" />
           </ChartPanel>
         </el-col>
         <el-col :xs="24" :md="8" class="viz-col">
-          <ChartPanel title="渠道对比" :loading="loading">
+          <ChartPanel :title="t('visualization.chartChannelCompare')" :loading="loading">
             <div ref="channelCompareRef" class="viz-chart" />
           </ChartPanel>
         </el-col>
         <el-col :xs="24" :md="8" class="viz-col">
-          <ChartPanel title="流量来源占比" :loading="loading">
+          <ChartPanel :title="t('visualization.chartTrafficSource')" :loading="loading">
             <div ref="sourceRatioRef" class="viz-chart" />
           </ChartPanel>
         </el-col>
@@ -161,17 +164,17 @@ onMounted(() => {
 
       <el-row :gutter="16" class="viz-row">
         <el-col :xs="24" :md="8" class="viz-col">
-          <ChartPanel title="成交额趋势" :loading="loading">
+          <ChartPanel :title="t('visualization.chartRevenueTrend')" :loading="loading">
             <div ref="revenueTrendRef" class="viz-chart" />
           </ChartPanel>
         </el-col>
         <el-col :xs="24" :md="8" class="viz-col">
-          <ChartPanel title="目标完成率" :loading="loading">
+          <ChartPanel :title="t('visualization.chartTargetRate')" :loading="loading">
             <div ref="targetRateRef" class="viz-chart" />
           </ChartPanel>
         </el-col>
         <el-col :xs="24" :md="8" class="viz-col">
-          <ChartPanel title="核心指标雷达" :loading="loading">
+          <ChartPanel :title="t('visualization.chartRadar')" :loading="loading">
             <div ref="metricsRadarRef" class="viz-chart" />
           </ChartPanel>
         </el-col>

@@ -6,14 +6,14 @@ import type {
 } from '@/types/role'
 
 export const STANDARD_PERMISSION_OPTIONS: PermissionLevelOption[] = [
-  { label: '无', value: 'none' },
-  { label: '可查看', value: 'view' },
-  { label: '可修改', value: 'edit' },
+  { labelKey: 'menu.permission.none', value: 'none' },
+  { labelKey: 'menu.permission.view', value: 'view' },
+  { labelKey: 'menu.permission.edit', value: 'edit' },
 ]
 
 export const MERCHANT_PERMISSION_OPTIONS: PermissionLevelOption[] = [
-  { label: '无', value: 'none' },
-  { label: '可操作', value: 'edit' },
+  { labelKey: 'menu.permission.none', value: 'none' },
+  { labelKey: 'menu.permission.operate', value: 'edit' },
 ]
 
 export function getPermissionOptions(moduleKey: string): PermissionLevelOption[] {
@@ -41,7 +41,7 @@ export function buildPermissionConfigItems(
     const level = normalizeLevelForModule(item.moduleKey, item.level)
     return {
       moduleKey: item.moduleKey,
-      permissionName: item.moduleName,
+      permissionNameKey: item.moduleNameKey,
       level,
       options: getPermissionOptions(item.moduleKey),
     }
@@ -49,11 +49,11 @@ export function buildPermissionConfigItems(
 }
 
 export function toStoredPermissions(
-  items: Pick<UserModulePermissionConfigItem, 'moduleKey' | 'permissionName' | 'level'>[],
+  items: Pick<UserModulePermissionConfigItem, 'moduleKey' | 'permissionNameKey' | 'level'>[],
 ): UserModulePermission[] {
   return items.map((item) => ({
     moduleKey: item.moduleKey,
-    moduleName: item.permissionName,
+    moduleNameKey: item.permissionNameKey,
     level: normalizeLevelForModule(item.moduleKey, item.level),
   }))
 }

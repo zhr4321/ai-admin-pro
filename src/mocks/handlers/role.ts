@@ -20,7 +20,7 @@ import type { UserSuggestItem } from '@/types/role'
 function toModulePermissions(levels: UserModulePermission[]): ModulePermission[] {
   return levels.map((p) => ({
     moduleKey: p.moduleKey,
-    moduleName: p.moduleName,
+    moduleNameKey: p.moduleNameKey,
     view: p.level === 'view' || p.level === 'edit',
     edit: p.level === 'edit',
   }))
@@ -42,23 +42,31 @@ function getLoginUserPermissions(authHeader: string | null): ModulePermission[] 
   return toModulePermissions(getPermissionsByUserId(userId))
 }
 
-function validatePermissionPayload(permissions: UserModulePermission[]): string | null {
+function validatePermissionPayload(
+  permissions: UserModulePermission[],
+): { messageKey: string; messageParams?: Record<string, string> } | null {
   const keys = new Set(permissions.map((p) => p.moduleKey))
   if (keys.size !== permissions.length) {
-    return '权限配置存在重复模块'
+    return { messageKey: 'errors.permissionDuplicate' }
   }
   for (const key of APP_MODULE_KEYS) {
     if (!keys.has(key)) {
-      return '权限配置缺少模块项'
+      return { messageKey: 'errors.permissionMissingModule' }
     }
   }
   for (const item of permissions) {
     if (!APP_MODULE_KEYS.includes(item.moduleKey)) {
-      return `未知模块：${item.moduleKey}`
+      return {
+        messageKey: 'errors.unknownModule',
+        messageParams: { moduleKey: item.moduleKey },
+      }
     }
     const level = normalizeLevelForModule(item.moduleKey, item.level)
     if (!isLevelAllowedForModule(item.moduleKey, level)) {
-      return `${item.moduleName} 的权限级别不合法`
+      return {
+        messageKey: 'errors.invalidPermissionLevel',
+        messageParams: { moduleName: item.moduleNameKey },
+      }
     }
   }
   return null
@@ -108,7 +116,7 @@ export const roleHandlers = [
     const user = findUser(id)
     if (!user) {
       return HttpResponse.json(
-        { code: 404, message: '用户不存在', data: null },
+        { code: 404, messageKey: 'errors.userNotFound', message: '用户不存在', data: null },
         { status: 404 },
       )
     }
@@ -166,7 +174,7 @@ export const roleHandlers = [
     const user = findUser(id)
     if (!user) {
       return HttpResponse.json(
-        { code: 404, message: '用户不存在', data: null },
+        { code: 404, messageKey: 'errors.userNotFound', message: '用户不存在', data: null },
         { status: 404 },
       )
     }
@@ -187,14 +195,19 @@ export const roleHandlers = [
     const user = findUser(id)
     if (!user) {
       return HttpResponse.json(
-        { code: 404, message: '用户不存在', data: null },
+        { code: 404, messageKey: 'errors.userNotFound', message: '用户不存在', data: null },
         { status: 404 },
       )
     }
 
     if (user.isSuperAdmin) {
       return HttpResponse.json(
-        { code: 403, message: '超级管理员权限不可修改', data: null },
+        {
+          code: 403,
+          messageKey: 'errors.superAdminLocked',
+          message: '超级管理员权限不可修改',
+          data: null,
+        },
         { status: 403 },
       )
     }
@@ -202,20 +215,31 @@ export const roleHandlers = [
     const body = (await request.json()) as { permissions: UserModulePermission[] }
     const validationError = validatePermissionPayload(body.permissions)
     if (validationError) {
-      return HttpResponse.json({ code: 400, message: validationError, data: null })
+      return HttpResponse.json({
+        code: 400,
+        messageKey: validationError.messageKey,
+        messageParams: validationError.messageParams,
+        message: validationError.messageKey,
+        data: null,
+      })
     }
 
     const saved = saveUserPermissions(id, body.permissions)
     if (!saved) {
       return HttpResponse.json(
-        { code: 403, message: '权限保存失败', data: null },
+        {
+          code: 403,
+          messageKey: 'errors.permissionSaveFailed',
+          message: '权限保存失败',
+          data: null,
+        },
         { status: 403 },
       )
     }
 
     return HttpResponse.json({
       code: 0,
-      message: '保存成功',
+      message: 'success',
       data: saved,
     })
   }),
