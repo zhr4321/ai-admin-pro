@@ -28,6 +28,12 @@ const router = createRouter({
           component: () => import('@/views/role/index.vue'),
           meta: { title: '用户权限', requiresAuth: true },
         },
+        {
+          path: 'profile',
+          name: 'Profile',
+          component: () => import('@/views/profile/index.vue'),
+          meta: { title: '个人信息', requiresAuth: true },
+        },
       ],
     },
   ],

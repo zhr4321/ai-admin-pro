@@ -1,5 +1,5 @@
 export type { ApiResponse } from './api'
-export type { LoginParams, LoginResult, UserInfo } from './auth'
+export type { LoginParams, LoginResult, Gender, UserInfo, UpdateProfileParams, AvatarUploadResult } from './auth'
 export type { DashboardStatItem, DashboardStats } from './dashboard'
 export type {
   PermissionLevel,

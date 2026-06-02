@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
-import { Expand, Fold, HomeFilled, SwitchButton, UserFilled } from '@element-plus/icons-vue'
+import { useRoute, useRouter } from 'vue-router'
+import { Expand, Fold, HomeFilled, SwitchButton, User, UserFilled } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
+const router = useRouter()
 const isCollapse = ref(false)
 const userStore = useUserStore()
 
@@ -21,6 +22,10 @@ function toggleCollapse() {
 
 function handleLogout() {
   userStore.logout()
+}
+
+function goProfile() {
+  router.push('/profile')
 }
 
 function syncCollapseByViewport() {
@@ -68,11 +73,14 @@ onUnmounted(() => {
         <div class="header-right">
           <el-dropdown>
             <span class="user-info">
-              <el-avatar :size="32">{{ userStore.avatarText }}</el-avatar>
+              <el-avatar :size="32" :src="userStore.userInfo?.avatar || undefined">
+                {{ userStore.avatarText }}
+              </el-avatar>
               <span class="username">{{ userStore.displayName }}</span>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
+                <el-dropdown-item :icon="User" @click="goProfile">个人信息</el-dropdown-item>
                 <el-dropdown-item :icon="SwitchButton" @click="handleLogout">
                   退出登录
                 </el-dropdown-item>
