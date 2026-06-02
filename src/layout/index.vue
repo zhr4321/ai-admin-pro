@@ -51,6 +51,14 @@ const menuItems: MenuItem[] = [
   { path: '/dashboard', title: '首页', icon: HomeFilled },
   { path: '/role', title: '用户权限', icon: UserFilled },
   {
+    title: '系统管理',
+    icon: Setting,
+    children: [
+      { path: '/settings', title: '系统设置', icon: Tools },
+      { path: '/merchant/onboarding', title: '商户入驻', icon: Document },
+    ],
+  },
+  {
     title: '运营中心',
     icon: Promotion,
     children: [
@@ -63,14 +71,6 @@ const menuItems: MenuItem[] = [
     icon: DataAnalysis,
     children: [
       { path: '/data-center/visualization', title: '数据可视化', icon: TrendCharts },
-    ],
-  },
-  {
-    title: '系统管理',
-    icon: Setting,
-    children: [
-      { path: '/settings', title: '系统设置', icon: Tools },
-      { path: '/merchant/onboarding', title: '商户入驻', icon: Document },
     ],
   },
 ]
@@ -126,8 +126,10 @@ onUnmounted(() => {
       </div>
       <el-menu
         ref="menuRef"
+        class="layout-menu"
         :default-active="activeMenu"
         :collapse="isCollapse"
+        :collapse-transition="false"
         :unique-opened="true"
         router
         background-color="var(--sidebar-bg)"
@@ -196,8 +198,6 @@ onUnmounted(() => {
 }
 
 .layout-aside {
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
   background-color: var(--sidebar-bg);
   transition: width 0.3s;
@@ -212,14 +212,21 @@ onUnmounted(() => {
     font-weight: 600;
     line-height: var(--line-height-title);
     background-color: var(--sidebar-bg-dark);
-    flex-shrink: 0;
   }
 
-  .el-menu {
-    flex: 1;
-    overflow-x: hidden;
-    overflow-y: auto;
+  .layout-menu {
     border-right: none;
+
+    :deep(.el-sub-menu__title) {
+      position: relative;
+      z-index: 1;
+    }
+
+    :deep(.el-menu--inline) {
+      position: relative;
+      z-index: 0;
+      overflow: hidden;
+    }
   }
 }
 
