@@ -88,7 +88,8 @@ npm run build
 | `vue-components.mdc` | Vue SFC 编写规范 |
 | `typescript.mdc` | TypeScript 编码规范 |
 | `style.mdc` | 色彩、排版、圆角、响应式与交互约定 |
-| `api-mock.mdc` | API 请求、MSW Mock 与接口类型约定 |
+| `api-request.mdc` | 接口请求封装、调用方式与错误处理 |
+| `api-mock.mdc` | MSW 本地 Mock 与 handler 约定 |
 | `_template.mdc` | 新建规则的空白模板 |
 
 ## 设计体系
@@ -111,6 +112,7 @@ npm run build
 | `new-admin-module.md` | 新增后台模块 |
 | `crud-page.md` | 表格 CRUD 页面 |
 | `bugfix-debug.md` | Bug 排查修复 |
+| `role-management.md` | 用户权限管理（用户搜索 + 模块权限下拉配置） |
 | `_template.md` | 新建 prompt 的空白模板 |
 
 详见 [`.cursor/prompts/README.md`](.cursor/prompts/README.md)。
@@ -128,7 +130,8 @@ npm run build
 
 - [x] 项目脚手架（Layout + Login + Dashboard）
 - [x] 登录鉴权（Token、路由守卫、Pinia 用户状态）
-- [ ] RBAC 权限（角色、菜单、按钮级权限）
+- [x] 用户权限管理（用户搜索、模块权限下拉：无/可查看/可修改）
+- [ ] RBAC 进阶（动态菜单、按钮级权限）
 - [ ] 表格 CRUD（搜索、分页、弹窗表单）
 - [ ] 表单模块（复杂表单、校验、联动）
 - [ ] 图表仪表盘（ECharts 数据可视化）
@@ -146,7 +149,8 @@ src/
 ├── types/           # 公共类型定义
 ├── views/
 │   ├── login/       # 登录页
-│   └── dashboard/   # 首页仪表盘
+│   ├── dashboard/   # 首页仪表盘
+│   └── role/        # 用户权限管理
 ├── App.vue
 └── main.ts
 ```

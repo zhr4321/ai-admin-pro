@@ -1,42 +1,59 @@
 ---
-description: API 请求、MSW Mock 与接口类型约定
-globs: src/api/**/*,src/mocks/**/*,src/types/**/*
+description: MSW 本地 Mock 与 handler 编写约定
+globs: src/mocks/**/*
 alwaysApply: false
 ---
 
-# API 与 MSW Mock 规范
+# MSW Mock 规范
 
-## 分层约定
+> 接口封装与页面调用方式见 `api-request.mdc`。
 
-- 页面/组件 **禁止直接使用 axios**，统一调用 `src/api/<module>.ts`
-- Mock 由 **MSW** 在开发环境拦截，禁止在组件或 `request.ts` 内写 mock 逻辑
-- 类型定义放 `src/types/`，按模块分文件并从 `index.ts` 导出
+## 基本原则
 
-## 新增接口流程
+- Mock 仅存在于 `src/mocks/`，**禁止**在 `request.ts` 或组件内写 mock 数据
+- 开发环境由 `main.ts` 启动 Worker；生产环境不启动 MSW
+- handler 拦截真实 HTTP 路径，与 axios `baseURL + url` 一致
 
-1. 在 `src/types/` 定义请求/响应类型
-2. 在 `src/mocks/handlers/` 添加 MSW handler（路径为 `/api/...` 完整路径）
-3. 在 `src/api/` 封装 API 方法
-4. 页面调用 API，运行 `npm run dev` 验证 MSW 拦截成功
+## 目录结构
 
-## 响应格式
-
-统一使用 `ApiResponse<T>`：
-
-```typescript
-{ code: 0, message: 'success', data: T }  // code === 0 为成功
+```
+src/mocks/
+├── handlers/
+│   ├── auth.ts
+│   ├── dashboard.ts
+│   └── index.ts      # 聚合导出
+├── browser.ts        # setupWorker
+└── index.ts          # startMockWorker()
 ```
 
-axios 拦截器已解包 `data`，API 函数返回 `Promise<T>`。
+## 新增 Mock 流程
 
-## MSW Handler 约定
+1. `src/types/` 定义类型
+2. `src/mocks/handlers/<模块>.ts` 添加 handler
+3. `handlers/index.ts` 注册
+4. `src/api/<模块>.ts` 封装 API
+5. `npm run dev` 验证控制台无未匹配请求警告
 
-- 路径与 axios 请求一致：`baseURL` 为 `/api` 时，handler 写 `/api/auth/login`
-- 成功：`HttpResponse.json({ code: 0, message, data })`
-- 业务失败：返回对应 HTTP 状态码 + `code !== 0`
-- handler 文件按模块拆分：`auth.ts`、`dashboard.ts`，由 `handlers/index.ts` 聚合
+## Handler 写法
 
-## 环境说明
+```typescript
+import { http, HttpResponse } from 'msw'
 
-- 开发环境：`main.ts` 启动 MSW Worker
-- 生产环境：不启动 MSW，对接真实后端时修改 `VITE_APP_BASE_API`
+http.post('/api/auth/login', async ({ request }) => {
+  const body = await request.json()
+  return HttpResponse.json({
+    code: 0,
+    message: 'success',
+    data: { /* ... */ },
+  })
+})
+```
+
+- 路径写完整：`/api/xxx`（因 `baseURL` 为 `/api`）
+- 成功：`code: 0` + `data`
+- 鉴权失败：HTTP 401 + `code !== 0`
+- 按业务模块拆分文件，避免单文件过大
+
+## 切换真实后端
+
+修改 `VITE_APP_BASE_API` 指向真实域名；关闭或移除开发环境 `startMockWorker()` 即可。

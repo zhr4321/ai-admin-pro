@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { Expand, Fold, HomeFilled, SwitchButton } from '@element-plus/icons-vue'
+import { Expand, Fold, HomeFilled, SwitchButton, UserFilled } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
@@ -12,6 +12,7 @@ const activeMenu = computed(() => route.path)
 
 const menuItems = [
   { path: '/dashboard', title: '首页', icon: HomeFilled },
+  { path: '/role', title: '用户权限', icon: UserFilled },
 ]
 
 function toggleCollapse() {

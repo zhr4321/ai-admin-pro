@@ -22,6 +22,7 @@
 | `new-admin-module.md` | 新增后台模块（路由 + 菜单 + 页面） |
 | `crud-page.md` | Element Plus 表格 CRUD 页面 |
 | `bugfix-debug.md` | 描述 bug 现象并定位修复 |
+| `role-management.md` | 用户权限管理（用户搜索 + 模块权限下拉配置） |
 
 ## 提示
 

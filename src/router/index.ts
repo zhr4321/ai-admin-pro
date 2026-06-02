@@ -22,6 +22,12 @@ const router = createRouter({
           component: () => import('@/views/dashboard/index.vue'),
           meta: { title: '首页', requiresAuth: true },
         },
+        {
+          path: 'role',
+          name: 'Role',
+          component: () => import('@/views/role/index.vue'),
+          meta: { title: '用户权限', requiresAuth: true },
+        },
       ],
     },
   ],

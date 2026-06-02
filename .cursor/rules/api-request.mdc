@@ -1,0 +1,79 @@
+---
+description: 接口请求封装、调用方式与错误处理约定
+globs: src/api/**/*,src/views/**/*,src/stores/**/*
+alwaysApply: false
+---
+
+# 接口请求规范
+
+## 调用链路
+
+```
+页面 / Store → src/api/<模块>.ts → request.ts → 后端或 MSW
+```
+
+- **禁止**在 `.vue`、组件内直接 `import axios` 或 `fetch`
+- **禁止**在页面里拼接 `baseURL`、手动设置 `Authorization`
+- 鉴权 Token 由 `request.ts` 统一从 `localStorage` 读取（`TOKEN_KEY = 'token'`）
+
+## API 模块约定
+
+| 项 | 约定 |
+|----|------|
+| 文件位置 | `src/api/<模块>.ts`（如 `auth.ts`、`dashboard.ts`） |
+| 函数命名 | 动词开头：`getXxx`、`createXxx`、`updateXxx`、`deleteXxx` |
+| 请求路径 | 相对 `baseURL`，不带 `/api` 前缀（如 `/auth/login`） |
+| 返回类型 | `Promise<T>`，T 为业务 `data` 类型（拦截器已解包） |
+
+示例：
+
+```typescript
+// src/api/auth.ts
+import request from './request'
+import type { LoginParams, LoginResult } from '@/types/auth'
+
+export function login(data: LoginParams) {
+  return request.post<LoginResult>('/auth/login', data)
+}
+```
+
+## 响应与错误
+
+- 统一响应体：`ApiResponse<T>`（`code === 0` 成功）
+- 业务失败（`code !== 0`）：拦截器 `ElMessage` 提示并 `reject`
+- HTTP **401**：清 Token、清用户状态、跳转 `/login`（勿在页面重复处理）
+- 页面 `try/catch`：仅处理 UI 状态（如 `loading`），勿重复弹错误 Toast
+
+```typescript
+// 页面中推荐写法
+loading.value = true
+try {
+  const data = await getDashboardStats()
+  stats.value = data.stats
+} catch {
+  // 错误已由 request 拦截器提示
+} finally {
+  loading.value = false
+}
+```
+
+## 类型约定
+
+- 请求/响应类型放 `src/types/<模块>.ts`，经 `src/types/index.ts` 导出
+- API 文件使用 `import type`，避免运行时引入类型
+- 分页列表等通用结构放 `src/types/api.ts` 复用
+
+## Store 与页面分工
+
+- **API 层**：纯请求，不含 UI 逻辑
+- **Store**（如 `useUserStore`）：登录、登出、拉用户信息等跨页面状态
+- **页面**：调 Store 或 API，管理表单/表格/loading
+
+## 环境变量
+
+- `VITE_APP_BASE_API`：接口前缀，默认 `/api`（见 `.env.development`）
+- 切换真实后端时只改环境变量，不改业务 API 函数签名
+
+## Mock 说明
+
+本地 Mock 使用 MSW，详见 `api-mock.mdc`。新增接口时需同步添加 handler。
