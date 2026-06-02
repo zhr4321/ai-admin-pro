@@ -53,6 +53,12 @@ const router = createRouter({
           meta: { title: '商户入驻', requiresAuth: true },
         },
         {
+          path: 'data-center/visualization',
+          name: 'DataVisualization',
+          component: () => import('@/views/data-center/visualization/index.vue'),
+          meta: { title: '数据可视化', requiresAuth: true },
+        },
+        {
           path: 'profile',
           name: 'Profile',
           component: () => import('@/views/profile/index.vue'),

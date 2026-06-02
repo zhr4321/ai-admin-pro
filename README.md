@@ -45,6 +45,7 @@ npm run build
 - 运营中心 → 公告管理：`/operations/notice`
 - 系统管理 → 系统设置：`/settings`（页内查看/编辑 + Logo 上传 + 维护模式联动）
 - 系统管理 → 商户入驻：`/merchant/onboarding`（三步向导表单）
+- 数据中心 → 数据可视化：`/data-center/visualization`（ECharts BI 大屏，近 7 天默认区间）
 
 ## 接口与本地 Mock（MSW）
 
@@ -152,7 +153,7 @@ npm run build
 - [x] 表单业务页示范（系统设置 view-edit、商户入驻 wizard）
 - [x] 路由与菜单性能优化（Layout 常驻、子菜单无动画、MSW 静默 bypass、路由预加载）
 - [ ] RBAC 进阶（动态菜单、按钮级权限）
-- [ ] 图表仪表盘（ECharts 数据可视化）
+- [x] 图表仪表盘（ECharts 数据可视化）
 - [ ] 系统设置进阶（主题切换、国际化）
 
 ## 目录结构
@@ -175,6 +176,8 @@ src/
 │   ├── settings/    # 系统设置（@admin-form view-edit 示范）
 │   ├── merchant/    # 商户相关
 │   │   └── onboarding/  # 商户入驻向导（@admin-form wizard 示范）
+│   ├── data-center/ # 数据中心
+│   │   └── visualization/  # 数据可视化 BI 大屏
 │   └── operations/  # 运营中心
 │       ├── campaign/  # 活动推广 CRUD
 │       └── notice/    # 公告管理 CRUD

@@ -5,6 +5,7 @@ import { merchantHandlers } from './merchant'
 import { noticeHandlers } from './notice'
 import { roleHandlers } from './role'
 import { settingsHandlers } from './settings'
+import { visualizationHandlers } from './visualization'
 
 export const handlers = [
   ...authHandlers,
@@ -14,4 +15,5 @@ export const handlers = [
   ...noticeHandlers,
   ...settingsHandlers,
   ...merchantHandlers,
+  ...visualizationHandlers,
 ]

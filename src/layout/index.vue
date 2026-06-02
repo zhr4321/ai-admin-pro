@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Component } from 'vue'
+import type { MenuInstance } from 'element-plus'
 import {
   Bell,
+  DataAnalysis,
   Document,
   Expand,
   Flag,
@@ -13,6 +15,7 @@ import {
   Setting,
   SwitchButton,
   Tools,
+  TrendCharts,
   User,
   UserFilled,
 } from '@element-plus/icons-vue'
@@ -38,6 +41,7 @@ function isMenuGroup(item: MenuItem): item is MenuGroup {
 
 const route = useRoute()
 const router = useRouter()
+const menuRef = ref<MenuInstance>()
 const isCollapse = ref(false)
 const userStore = useUserStore()
 
@@ -55,6 +59,13 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
+    title: '数据中心',
+    icon: DataAnalysis,
+    children: [
+      { path: '/data-center/visualization', title: '数据可视化', icon: TrendCharts },
+    ],
+  },
+  {
     title: '系统管理',
     icon: Setting,
     children: [
@@ -63,6 +74,19 @@ const menuItems: MenuItem[] = [
     ],
   },
 ]
+
+function syncOpenedSubMenuByRoute() {
+  if (!menuRef.value) {
+    return
+  }
+
+  for (const item of menuItems) {
+    if (isMenuGroup(item) && item.children.some((child) => child.path === route.path)) {
+      menuRef.value.open(item.title)
+      return
+    }
+  }
+}
 
 function toggleCollapse() {
   isCollapse.value = !isCollapse.value
@@ -80,9 +104,12 @@ function syncCollapseByViewport() {
   isCollapse.value = window.innerWidth < 768
 }
 
+watch(() => route.path, syncOpenedSubMenuByRoute)
+
 onMounted(() => {
   syncCollapseByViewport()
   window.addEventListener('resize', syncCollapseByViewport)
+  syncOpenedSubMenuByRoute()
 })
 
 onUnmounted(() => {
@@ -98,9 +125,9 @@ onUnmounted(() => {
         <span v-else>A</span>
       </div>
       <el-menu
+        ref="menuRef"
         :default-active="activeMenu"
         :collapse="isCollapse"
-        :collapse-transition="false"
         :unique-opened="true"
         router
         background-color="var(--sidebar-bg)"
@@ -112,7 +139,7 @@ onUnmounted(() => {
             <el-icon><component :is="item.icon" /></el-icon>
             <template #title>{{ item.title }}</template>
           </el-menu-item>
-          <el-sub-menu v-else :key="item.title" :index="item.title">
+          <el-sub-menu v-else :key="`group-${item.title}`" :index="item.title">
             <template #title>
               <el-icon><component :is="item.icon" /></el-icon>
               <span>{{ item.title }}</span>
@@ -169,6 +196,8 @@ onUnmounted(() => {
 }
 
 .layout-aside {
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   background-color: var(--sidebar-bg);
   transition: width 0.3s;
@@ -183,9 +212,13 @@ onUnmounted(() => {
     font-weight: 600;
     line-height: var(--line-height-title);
     background-color: var(--sidebar-bg-dark);
+    flex-shrink: 0;
   }
 
   .el-menu {
+    flex: 1;
+    overflow-x: hidden;
+    overflow-y: auto;
     border-right: none;
   }
 }
