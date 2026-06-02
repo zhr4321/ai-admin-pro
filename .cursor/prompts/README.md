@@ -24,6 +24,7 @@
 | `form-page.md` | 表单页面（查看/编辑、全页表单、向导；推荐配合 `@admin-form`） |
 | `bugfix-debug.md` | 描述 bug 现象并定位修复 |
 | `role-management.md` | 用户权限管理（用户搜索 + 模块权限下拉配置） |
+| `ai-chat-stream.md` | SSE AI 流式对话（全局悬浮助手；推荐配合 `@ai-chat`） |
 
 ## 提示
 

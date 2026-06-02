@@ -1,0 +1,178 @@
+SSE AI 流式对话模块需求（ai-chat-stream）：
+
+0. 模块定位与边界：
+   - 全局悬浮 AI 助手，非菜单路由模块，不写入 APP_MODULES / MENU_ITEMS
+   - 挂载于 src/layout/index.vue，登录后 Layout 内各页面可用；/login 不显示
+   - 会话与消息持久化使用 localStorage，不依赖后端对话 CRUD
+   - 流式回答通过 SSE 接口获取；开发环境 MSW Mock，生产环境 BFF 代理
+   - 与 admin-form、admin-crud-table 无交集，禁止复用其 Skill 实现本模块
+
+1. 全局悬浮圆形入口（类似浏览器豆包插件）：
+   - 形态：圆形 FAB，直径 56px，主色背景 var(--primary-color)，图标 ChatDotRound，白色
+   - 默认位置：视口右下角（距右 24px、距底 24px）
+   - 可拖拽：按住图标拖动到视口任意位置；松手后 clamp 在视口内，不超出边界
+   - 拖拽与点击区分：移动距离 > 5px 视为拖拽，不触发展开
+   - 位置持久化：localStorage 键 ai-admin-pro:ai-chat:fab-position，格式 { x, y }
+   - 点击（非拖拽）：从右侧滑出对话抽屉；图标在抽屉展开时可隐藏或保持原位（首版：隐藏，关闭后恢复）
+   - 显示条件：aiChatConfig.enabled && aiChatConfig.showInLayout 为 true 时渲染
+   - z-index：悬浮图标 2999，遮罩与抽屉 3000
+
+2. 右侧抽屉面板（PC 端微信结构）：
+   - 展开方式：fixed 贴右，translateX 滑入，动画 300ms ease
+   - 尺寸：高度 100vh；宽度 960px；视口 < 768px 时宽度 100vw
+   - 遮罩：抽屉左侧剩余区域半透明黑色 rgba(0,0,0,0.45)，点击遮罩等同关闭
+   - 层级：遮罩与抽屉均在 Element Plus 弹层之上（z-index 3000）
+   - 布局：横向 flex，左侧会话栏 + 右侧对话区，均撑满抽屉高度
+   - Header（右侧对话区顶部）：左侧标题「AI 助手」，右侧关闭按钮（Close 图标）；点击关闭收回为圆形图标
+   - 关闭行为：仅收起 UI，不销毁 localStorage 会话数据；当前会话 id 可存 sessionStorage 或 localStorage
+
+3. 左侧会话栏（约 260px，<768px 可折叠或全宽切换）：
+   - 顶部：「新对话」按钮 type="primary" 全宽或带 Plus 图标
+   - 列表：展示所有会话，当前选中项高亮（背景 var(--bg-primary) 或 primary 浅色）
+   - 会话标题：首条用户消息前 20 字；无消息时显示「新对话」
+   - 辅助信息：updatedAt 格式化为 MM-DD HH:mm 或「刚刚」
+   - 删除：每项 hover 显示删除图标；点击 ElMessageBox.confirm「确定删除该对话吗？」确认后删除
+   - 切换：点击列表项切换 currentConversationId，右侧加载对应 messages
+   - 空状态：无会话时列表为空，展示「暂无对话，点击上方新对话开始」
+   - 新对话：生成 uuid 会话，标题「新对话」，messages 为空，并设为当前会话
+
+4. 右侧对话区（上方消息 + 下方输入）：
+   - 结构：flex 纵向；messages 区域 flex:1 overflow-y:auto；input 区域固定底部
+   - 用户气泡：右对齐，背景 primary 浅色，圆角 4px，最大宽度 85%
+   - AI 气泡：左对齐，背景 #fff 或 var(--bg-primary)，边框 var(--border-color)，最大宽度 85%
+   - 空状态（当前会话无消息）：居中展示引导文案「你好，有什么可以帮你的？」
+   - 禁止：消息区与输入区之间出现双滚动条；仅 messages 区域滚动
+
+5. 输入与 SSE 流式回答：
+   - 输入框：el-input type="textarea"，rows 3，placeholder「输入问题，Enter 发送，Shift+Enter 换行」
+   - 发送：Enter 发送；Shift+Enter 换行；右下角纸飞机图标按钮（Promotion 或 Position）
+   - 发送前：trim 内容，空内容不发送
+   - 发送流程：
+     a. 追加 user message 到当前会话
+     b. 追加 assistant 占位 message（content 空，status: streaming）
+     c. 调用 SSE 接口，流式追加 content 到占位 message
+     d. 完成后 status: done，更新会话 updatedAt 与 title（首条用户消息时）
+   - 请求体：{ conversationId, messages: [{ role, content }] }，含 system prompt（来自配置 defaultSystemPrompt）
+   - 流式实现：fetch + ReadableStream 解析 SSE（data: 行），不引入额外 SSE 库
+   - 请求头：Authorization Bearer token（与 request.ts 一致）；Content-Type application/json
+   - 流式进行中：
+     - AI 气泡末尾展示闪烁光标或 el-icon Loading
+     - 发送按钮变为正方形停止按钮（VideoPause 图标）
+     - 输入框 disabled，Enter 不发送
+   - 停止：AbortController.abort()；保留已输出内容；status: aborted；不展示错误提示
+   - 防重复：同一时刻仅允许一条流式请求
+
+6. 富文本渲染（Markdown）：
+   - 依赖：markdown-it + highlight.js（代码高亮）
+   - 支持：GFM 常用语法——标题、列表、粗体、斜体、链接、引用、代码块、行内代码、表格
+   - 安全：html: false 或 DOMPurify 消毒，禁止渲染原始 HTML 防 XSS
+   - AI 气泡：v-html 渲染 markdown 结果；用户气泡：纯文本 pre-wrap，不渲染 markdown
+   - 代码块：highlight.js 主题与项目风格协调；横向溢出可滚动
+   - 样式：引入 src/styles/ai-chat.scss，禁止硬编码色值
+
+7. 消息区滚动与回到底部：
+   - 自动滚动：流式输出时，若 scrollTop + clientHeight >= scrollHeight - 80（距底阈值 80px），则滚到底
+   - 用户向上滚动后：暂停自动滚动，不强制拉回
+   - 回到底部按钮：messages 区底部居中浮动，Down 箭头圆形按钮；仅当「未在底部且存在消息」时显示
+   - 点击回底：scrollTo({ top: scrollHeight, behavior: 'smooth' })
+   - 新消息发送后：若之前在底部，发送后恢复跟随滚动
+
+8. 错误处理：
+   - 触发：SSE 断连、HTTP 非 2xx、SSE error 事件、JSON 解析失败、超时（requestTimeoutMs）
+   - 行为：
+     a. 清除当前 assistant 占位消息的流式中间态（content 清空）
+     b. status: error，展示错误气泡（样式使用 --error 色系）
+     c. 优先展示服务端 message 或 SSE error payload
+     d. 无服务端文案时兜底：「AI 回答失败，请稍后重试」
+   - 用户主动停止（aborted）不算错误，不展示错误气泡样式
+   - 错误气泡下方仍可有「重新生成」按钮（见第 10 条）
+
+9. 用户消息操作（气泡下方）：
+   - 按钮：复制、修改；小字号 text 按钮或 link 样式，hover 显示
+   - 复制：navigator.clipboard.writeText(content)；成功 ElMessage.success('已复制')
+   - 修改：内容回填输入框并 focus；记录 editingMessageId
+   - 修改后发送：删除该 user message 及其之后所有 messages（含未完成 AI 回复），以新内容作为 user message 重新提问
+   - 流式进行中：用户消息操作按钮 disabled
+
+10. AI 消息操作（气泡下方）：
+    - 按钮：重新生成、复制
+    - 复制：复制 Markdown 源文本（message.content）；成功 ElMessage.success('已复制')
+    - 重新生成：删除该条 assistant message，找到紧邻的上一条 user message，以其 content 重新发起 SSE（保留该 user 之前上下文）
+    - 流式进行中：AI 消息操作按钮 disabled
+    - 重新生成次数：首版不限制
+
+11. Agent 配置文件（src/config/ai-chat.ts）：
+    - 导出 AiChatConfig 类型与 aiChatConfig 默认对象
+    - 字段：
+      enabled: boolean              // 总开关，false 时整个模块不渲染
+      showInLayout: boolean          // Layout 内是否显示悬浮入口，默认 true
+      provider: 'deepseek' | 'openai' | 'custom'
+      apiBaseUrl: string             // 上游 API 基址，如 https://api.deepseek.com（BFF 使用）
+      apiKeyEnv: string              // 环境变量名，默认 VITE_AI_API_KEY
+      model: string                  // 如 deepseek-chat、gpt-4o-mini
+      streamPath: string             // 前端请求路径，默认 /api/ai/chat/stream
+      defaultSystemPrompt?: string   // 可选系统提示词
+      requestTimeoutMs: number       // 默认 60000
+    - 预设 provider 配置示例（注释或 PROVIDER_PRESETS）：
+      deepseek: apiBaseUrl https://api.deepseek.com, model deepseek-chat
+      openai: apiBaseUrl https://api.openai.com/v1, model gpt-4o-mini
+    - .env.development 增加 VITE_AI_API_KEY= 占位，禁止提交真实 key
+    - 切换 DeepSeek / OpenAI：只改 ai-chat.ts 的 provider / model / apiBaseUrl + .env，不改组件
+    - 安全：生产环境 API Key 必须经 BFF 转发，禁止前端直连暴露 Key；streamPath 走项目 /api 前缀
+
+12. localStorage 数据模型：
+    - 键 ai-admin-pro:ai-chat:conversations：StoredConversation[]
+    - 键 ai-admin-pro:ai-chat:fab-position：{ x: number, y: number }
+    - 键 ai-admin-pro:ai-chat:current-id：当前选中会话 id（可选）
+    - StoredConversation：{ id, title, createdAt, updatedAt, messages[] }
+    - ChatMessage：{ id, role: 'user'|'assistant', content, status?: 'streaming'|'done'|'error'|'aborted', errorMessage? }
+    - 启动时从 localStorage 恢复；任意变更 debounce 或即时写回
+    - 页面刷新时：streaming 状态的消息改为 aborted 或 done（content 保留已有部分）
+
+13. API 与 MSW Mock：
+    - src/api/aiChat.ts：streamChat(params, { signal }) 返回 AsyncIterable 或回调 onChunk/onError/onDone
+    - 不使用 axios 拦截器处理 SSE（避免与 ApiResponse 格式冲突），使用 fetch
+    - MSW handler：POST /api/ai/chat/stream，Content-Type text/event-stream，分片返回 data: {"content":"..."} 模拟打字
+    - Mock 无 Key 时可正常体验；配置真实 Key + 关闭 MSW 或 bypass 时走 BFF
+    - SSE 事件格式约定：
+      data: {"content":"增量文本"}
+      data: [DONE]
+      event: error / data: {"message":"错误原因"}
+
+14. 建议文件划分：
+    - src/components/ai-chat/AiChatFab.vue          悬浮图标 + 拖拽
+    - src/components/ai-chat/AiChatDrawer.vue       抽屉壳、遮罩、开关
+    - src/components/ai-chat/AiChatSidebar.vue      会话列表
+    - src/components/ai-chat/AiChatMessages.vue     消息列表、markdown、滚动、回底
+    - src/components/ai-chat/AiChatInput.vue        输入、发送/停止
+    - src/components/ai-chat/AiChatMessageItem.vue  单条消息 + 操作按钮
+    - src/composables/useAiChatStream.ts            SSE + AbortController
+    - src/composables/useChatScroll.ts              自动滚动逻辑
+    - src/stores/aiChat.ts                          Pinia 会话状态
+    - src/utils/aiChatStorage.ts                    localStorage
+    - src/utils/markdown.ts                         markdown-it 封装
+    - src/types/aiChat.ts                           类型
+    - src/mocks/handlers/aiChat.ts                  MSW SSE
+    - src/styles/ai-chat.scss                       样式
+    - src/layout/index.vue                          条件挂载 <AiChatFab v-if="..." />
+
+15. 样式与规范：
+    - 遵循 .cursor/rules/style.mdc、vue-components.mdc、project-core.mdc
+    - 使用 variables.scss 令牌，圆角 4px，UI 文案中文
+    - 抽屉内字号：正文 14px，辅助 12px，标题 16px font-weight 600
+
+16. 待讨论 / 可选细节（首版默认）：
+    - 会话标题：首条用户消息前 20 字自动命名（已采用）
+    - 空状态：点击「新对话」才创建会话，不自动创建（已采用）
+    - 多模态：首版仅文本，不支持图片/文件
+    - 权限 RBAC：首版不做 moduleKey 限制，所有登录用户可用
+    - 图标：Element Plus ChatDotRound + 主色圆底（已采用）
+    - 抽屉动画：300ms ease（已采用）
+
+17. 生成后检查清单：
+    - npm run build 通过
+    - UI 文案中文
+    - 不新增菜单路由
+    - 开发环境 MSW 可离线体验流式 Mock
+    - diff 最小，不改动无关 CRUD/表单页
+    - enabled: false 或 showInLayout: false 时模块完全不显示

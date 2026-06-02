@@ -1,4 +1,5 @@
 import { authHandlers } from './auth'
+import { aiChatHandlers } from './aiChat'
 import { campaignHandlers } from './campaign'
 import { dashboardHandlers } from './dashboard'
 import { merchantHandlers } from './merchant'
@@ -9,6 +10,7 @@ import { visualizationHandlers } from './visualization'
 
 export const handlers = [
   ...authHandlers,
+  ...aiChatHandlers,
   ...dashboardHandlers,
   ...roleHandlers,
   ...campaignHandlers,

@@ -9,6 +9,8 @@ import {
   User,
 } from '@element-plus/icons-vue'
 import { isMenuGroup, MENU_ITEMS, type MenuItemConfig } from '@/config/modules'
+import { aiChatConfig } from '@/config/ai-chat'
+import AiChatFab from '@/components/ai-chat/AiChatFab.vue'
 import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
@@ -156,6 +158,8 @@ onUnmounted(() => {
       </el-main>
     </el-container>
   </el-container>
+
+  <AiChatFab v-if="aiChatConfig.enabled && aiChatConfig.showInLayout" />
 </template>
 
 <style scoped lang="scss">

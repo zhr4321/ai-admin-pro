@@ -155,6 +155,7 @@ npm run build
 | `form-page.md` | 表单页面（查看/编辑、全页表单、向导；推荐配合 `@admin-form`） |
 | `bugfix-debug.md` | Bug 排查修复 |
 | `role-management.md` | 用户权限管理（用户搜索 + 模块权限下拉配置） |
+| `ai-chat-stream.md` | SSE AI 流式对话（全局悬浮助手；推荐配合 `@ai-chat`） |
 | `_template.md` | 新建 prompt 的空白模板 |
 
 详见 [`.cursor/prompts/README.md`](.cursor/prompts/README.md)。
@@ -168,6 +169,7 @@ npm run build
 | `admin-module-dev` | 按规范开发后台模块（路由、菜单、页面） |
 | `admin-crud-table` | 统一样式表格 CRUD（可配置工具栏、大弹窗新增、xlsx 模板/导出/导入） |
 | `admin-form` | 统一样式表单页（查看/编辑、全页表单、分步向导、联动、登录表单） |
+| `ai-chat` | SSE AI 流式对话（全局悬浮 FAB、微信式抽屉、Markdown 流式回答） |
 | `_template` | 新建 Skill 的空白模板 |
 
 ## 模块路线图
@@ -183,6 +185,7 @@ npm run build
 - [x] 路由与菜单性能优化（Layout 常驻、子菜单无动画、MSW 静默 bypass、路由预加载）
 - [x] 模块权限 RBAC（动态菜单、`meta.moduleKey` 路由守卫、写操作按钮与 Mock 写接口校验）
 - [x] 图表仪表盘（ECharts 数据可视化）
+- [x] SSE AI 流式对话（全局悬浮助手）
 - [ ] 系统设置进阶（主题切换、国际化）
 
 ## 目录结构
@@ -216,7 +219,7 @@ src/
 
 public/static/       # 导入模板 xlsx 等静态资源
 scripts/             # 脚本（如 generate-xlsx-template.mjs）
-text/                # Skill 需求原文（admin-crud-table、admin-form 等）
+text/                # Skill 需求原文（admin-crud-table、admin-form、ai-chat-stream 等）
 ```
 
 ### 性能说明
