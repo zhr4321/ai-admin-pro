@@ -1,0 +1,133 @@
+// 表格 CRUD 列表页统一样式（由 admin-crud-table Skill 约束使用）
+.crud-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: calc(100vh - 120px);
+  min-height: 480px;
+}
+
+.crud-search-card,
+.crud-table-card {
+  border-radius: var(--radius-base);
+}
+
+.crud-search-card {
+  flex-shrink: 0;
+  overflow: visible;
+
+  :deep(.el-card__body) {
+    overflow: visible;
+    padding-bottom: 16px;
+  }
+}
+
+// 查询区：每项至少占行宽 1/3，控件定宽；查询/重置独占一行右对齐
+.crud-search-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  overflow: visible;
+
+  .el-form-item:not(.crud-search-actions) {
+    flex: 0 1 33.333%;
+    min-width: 33.333%;
+    margin-right: 0;
+    margin-bottom: 16px;
+    box-sizing: border-box;
+    padding-right: 16px;
+  }
+
+  .el-form-item.crud-search-item--wide {
+    flex: 0 1 66.666%;
+    min-width: 66.666%;
+  }
+
+  .el-form-item.crud-search-item--full {
+    flex: 0 1 100%;
+    min-width: 100%;
+  }
+
+  .el-form-item.crud-search-actions {
+    flex: 0 0 100%;
+    width: 100%;
+    margin-bottom: 0;
+    padding-right: 0;
+
+    :deep(.el-form-item__content) {
+      flex: 1;
+      margin-left: 0 !important;
+      justify-content: flex-end;
+    }
+  }
+}
+
+.crud-table-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  :deep(.el-card__body) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    padding-top: 16px;
+  }
+}
+
+.crud-table-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 0 4px;
+}
+
+.crud-toolbar-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.crud-table-card .crud-divider {
+  flex-shrink: 0;
+  margin: 12px 0;
+}
+
+.crud-table-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.crud-result-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.crud-page .card-title {
+  font-size: var(--font-size-title);
+  font-weight: 600;
+  color: var(--text-dark);
+  line-height: var(--line-height-title);
+}
+
+.crud-pagination {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 0 4px;
+}
+
+.crud-import-upload {
+  display: inline-block;
+}

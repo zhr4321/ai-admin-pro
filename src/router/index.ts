@@ -29,6 +29,18 @@ const router = createRouter({
           meta: { title: '用户权限', requiresAuth: true },
         },
         {
+          path: 'operations/campaign',
+          name: 'OperationsCampaign',
+          component: () => import('@/views/operations/campaign/index.vue'),
+          meta: { title: '活动推广', requiresAuth: true },
+        },
+        {
+          path: 'operations/notice',
+          name: 'OperationsNotice',
+          component: () => import('@/views/operations/notice/index.vue'),
+          meta: { title: '公告管理', requiresAuth: true },
+        },
+        {
           path: 'profile',
           name: 'Profile',
           component: () => import('@/views/profile/index.vue'),

@@ -23,12 +23,10 @@ disable-model-invocation: true
 
 ## CRUD 页面额外步骤
 
-若模块需要 CRUD，参考 `.cursor/prompts/crud-page.md`：
+若模块需要**标准表格 CRUD**（查询/重置 + 表格 + 分页 + 弹窗表单），使用 **`@admin-crud-table`** Skill：
 
-- 搜索栏 + 表格 + 分页
-- el-dialog 表单弹窗 + FormRules 校验
-- 删除使用 el-message-box 确认
-- 数据先用 mock，类型用 interface 定义
+- 统一样式见 `src/styles/crud-page.scss` 与 `.cursor/skills/admin-crud-table/template.vue`
+- 也可参考 `.cursor/prompts/crud-page.md` 补充业务字段说明
 
 ## 检查清单
 

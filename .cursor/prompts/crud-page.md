@@ -1,5 +1,7 @@
 # 表格 CRUD 页面
 
+> **推荐**：在 Cursor Chat 中 `@admin-crud-table` Skill，可生成布局与样式统一的 CRUD 页面（查询/重置、表格操作列、分页）。本文件可作为补充业务需求的简短 prompt。
+
 ## 适用场景
 
 在已有模块基础上，实现 Element Plus 标准 CRUD 页面：搜索栏、数据表格、分页、新增/编辑弹窗、删除确认。
@@ -23,9 +25,11 @@
 6. 删除：el-message-box 二次确认
 
 技术要求：
+- 遵循 @admin-crud-table：查询区定宽+actions右对齐、useCrudTableHeight、分页中文、操作列查看/修改/删除、可选 xlsx 导入导出
 - 使用 <script setup lang="ts"> + Element Plus 组件
+- 列表分页类型使用 PageParams / PageResult（src/types/api.ts）
 - 数据先用 mock 数组，后续再接 API
-- 类型定义用 interface，放同文件或 types 目录
+- 类型定义用 interface，放 src/types/<module>.ts
 - 遵循 .cursor/rules/ 中的项目规则
 - 完成后运行 npm run build 验证
 ```

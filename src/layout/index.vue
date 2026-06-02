@@ -1,8 +1,37 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Expand, Fold, HomeFilled, SwitchButton, User, UserFilled } from '@element-plus/icons-vue'
+import type { Component } from 'vue'
+import {
+  Bell,
+  Expand,
+  Flag,
+  Fold,
+  HomeFilled,
+  Promotion,
+  SwitchButton,
+  User,
+  UserFilled,
+} from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
+
+interface MenuLeaf {
+  path: string
+  title: string
+  icon: Component
+}
+
+interface MenuGroup {
+  title: string
+  icon: Component
+  children: MenuLeaf[]
+}
+
+type MenuItem = MenuLeaf | MenuGroup
+
+function isMenuGroup(item: MenuItem): item is MenuGroup {
+  return 'children' in item
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -11,9 +40,17 @@ const userStore = useUserStore()
 
 const activeMenu = computed(() => route.path)
 
-const menuItems = [
+const menuItems: MenuItem[] = [
   { path: '/dashboard', title: '首页', icon: HomeFilled },
   { path: '/role', title: '用户权限', icon: UserFilled },
+  {
+    title: '运营中心',
+    icon: Promotion,
+    children: [
+      { path: '/operations/campaign', title: '活动推广', icon: Flag },
+      { path: '/operations/notice', title: '公告管理', icon: Bell },
+    ],
+  },
 ]
 
 function toggleCollapse() {
@@ -57,10 +94,26 @@ onUnmounted(() => {
         text-color="var(--sidebar-text)"
         active-text-color="var(--sidebar-active)"
       >
-        <el-menu-item v-for="item in menuItems" :key="item.path" :index="item.path">
-          <el-icon><component :is="item.icon" /></el-icon>
-          <template #title>{{ item.title }}</template>
-        </el-menu-item>
+        <template v-for="item in menuItems">
+          <el-menu-item v-if="!isMenuGroup(item)" :key="item.path" :index="item.path">
+            <el-icon><component :is="item.icon" /></el-icon>
+            <template #title>{{ item.title }}</template>
+          </el-menu-item>
+          <el-sub-menu v-else :key="item.title" :index="item.title">
+            <template #title>
+              <el-icon><component :is="item.icon" /></el-icon>
+              <span>{{ item.title }}</span>
+            </template>
+            <el-menu-item
+              v-for="child in item.children"
+              :key="child.path"
+              :index="child.path"
+            >
+              <el-icon><component :is="child.icon" /></el-icon>
+              <template #title>{{ child.title }}</template>
+            </el-menu-item>
+          </el-sub-menu>
+        </template>
       </el-menu>
     </el-aside>
 

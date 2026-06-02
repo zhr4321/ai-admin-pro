@@ -124,6 +124,7 @@ npm run build
 | Skill | 说明 |
 |-------|------|
 | `admin-module-dev` | 按规范开发后台模块（路由、菜单、页面） |
+| `admin-crud-table` | 统一样式表格 CRUD（可配置工具栏、大弹窗新增、xlsx 模板/导出/导入） |
 | `_template` | 新建 Skill 的空白模板 |
 
 ## 模块路线图

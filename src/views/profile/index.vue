@@ -161,7 +161,7 @@ onMounted(() => {
             <el-descriptions-item label="性别">{{ genderLabel(profile.gender) }}</el-descriptions-item>
             <el-descriptions-item label="联系电话">{{ profile.phone }}</el-descriptions-item>
             <el-descriptions-item label="职位">{{ profile.position }}</el-descriptions-item>
-            <el-descriptions-item label="在该项目中的身份">{{ profile.projectRole }}</el-descriptions-item>
+            <el-descriptions-item label="项目权限">{{ profile.projectRole }}</el-descriptions-item>
             <el-descriptions-item label="个人备注" :span="2">
               {{ profile.remark || '—' }}
             </el-descriptions-item>
@@ -218,7 +218,7 @@ onMounted(() => {
               <el-form-item label="职位">
                 <el-input :model-value="profile.position" disabled />
               </el-form-item>
-              <el-form-item label="在该项目中的身份">
+              <el-form-item label="项目权限">
                 <el-input :model-value="profile.projectRole" disabled />
               </el-form-item>
               <el-form-item label="个人备注" prop="remark" class="form-item-full">
