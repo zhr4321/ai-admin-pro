@@ -233,7 +233,8 @@ text/                # Skill 需求原文（admin-crud-table、admin-form、ai-c
 
 ## 仓库地址
 
-https://gitee.com/walkingtree/ai-admin-pro.git
+- GitHub：https://github.com/zhr4321/ai-admin-pro.git
+- Gitee：https://gitee.com/walkingtree/ai-admin-pro.git
 
 ## License
 
